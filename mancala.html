@@ -1,0 +1,57 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Mancala AI</title>
+    <link rel="stylesheet" href="main.css">
+</head>
+<body>
+    <h1>Mancala AI</h1>
+    <div class="ai-controls">
+        <label for="ai-algorithm">AI Algorithm:</label>
+        <select id="ai-algorithm">
+            <option value="alpha_beta">Alpha-Beta Pruning</option>
+            <option value="advanced">Advanced Heuristic</option>
+            <option value="minimax">Minimax</option>
+            <option value="dqn">Neural Network (DQN)</option>
+        </select>
+    
+        <div id="depth-control" class="hidden">
+            <label for="ai-depth">Search Depth:</label>
+            <input type="number" id="ai-depth" min="1" max="10" value="7">
+        </div>
+    </div>
+    <div class="board-container">
+        <div class="board">
+            <div class="store" id="store2">0</div>
+            <div class="pits-container">
+                <div class="pits-row player2">
+                    <!-- Player 2 pits (indices 7-12) -->
+                    <div class="pit" data-index="7">4</div>
+                    <div class="pit" data-index="8">4</div>
+                    <div class="pit" data-index="9">4</div>
+                    <div class="pit" data-index="10">4</div>
+                    <div class="pit" data-index="11">4</div>
+                    <div class="pit" data-index="12">4</div>
+                </div>
+                <div class="pits-row player1">
+                    <!-- Player 1 pits (indices 0-5) -->
+                    <div class="pit" data-index="0">4</div>
+                    <div class="pit" data-index="1">4</div>
+                    <div class="pit" data-index="2">4</div>
+                    <div class="pit" data-index="3">4</div>
+                    <div class="pit" data-index="4">4</div>
+                    <div class="pit" data-index="5">4</div>
+                </div>
+            </div>
+            <div class="store" id="store1">0</div>
+        </div>
+    </div>
+    <div class="status" id="status">Player 1's Turn</div>
+
+    <script type="module" src="game.js"></script>
+    <script type="module" src="ai.js"></script>
+    <script type="module" src="ui.js"></script>
+</body>
+</html>

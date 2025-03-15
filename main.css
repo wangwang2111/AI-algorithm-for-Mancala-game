@@ -1,0 +1,196 @@
+body {
+    text-align: center;
+    font-family: 'Arial', sans-serif;
+    background: linear-gradient(to right, #f0f0f0, #dfe6e9);
+    margin: 0;
+    padding: 20px;
+}
+
+h1 {
+    color: #2c3e50;
+    margin-bottom: 30px;
+    font-size: 2.5em;
+    text-shadow: 2px 2px 4px rgba(0,0,0,0.1);
+}
+
+.board-container {
+    display: inline-block;
+    background: #2980b9;
+    padding: 30px;
+    border-radius: 20px;
+    box-shadow: 0 15px 30px rgba(0,0,0,0.2);
+    border: 5px solid #2c3e50;
+}
+
+.board {
+    display: flex;
+    gap: 15px;
+    position: relative;
+    align-items: center;
+    flex-direction: row;
+}
+
+.store {
+    width: 120px;
+    height: 350px;
+    background: #e74c3c;
+    border-radius: 60px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 3em;
+    color: white;
+    margin: 0 20px;
+    box-shadow: inset 0 0 15px rgba(0,0,0,0.2);
+    border: 3px solid #c0392b;
+}
+
+/* Updated CSS for horizontal pit arrangement */
+.board {
+    display: flex;
+    flex-direction: row;
+    align-items: center;
+    gap: 20px;
+}
+
+.pits-container {
+    display: flex;
+    flex-direction: column;
+    gap: 30px;
+}
+
+.pits-row {
+    display: flex;
+    flex-direction: row;
+    gap: 15px;
+}
+
+/* Keep other styles the same */
+
+/* Reverse the order for player 2's pits */
+.player2.pits-row {
+    flex-direction: row-reverse;
+}
+
+/* Store positioning */
+.store:first-child {
+    order: 3;
+}
+
+.pits-container {
+    order: 2;
+}
+
+.store:last-child {
+    order: 1;
+}
+
+/* .pits-container {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+} */
+
+/* .pits-row {
+    display: flex;
+    flex-direction: row;
+    gap: 25px;
+    justify-content: center;
+} */
+
+.pit {
+    width: 90px;
+    height: 90px;
+    background: #ecf0f1;
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 1.8em;
+    cursor: pointer;
+    transition: all 0.3s ease;
+    box-shadow: 0 8px 16px rgba(0,0,0,0.15);
+    border: 3px solid #7f8c8d;
+}
+
+.pit:hover {
+    transform: scale(1.1);
+    background: #bdc3c7;
+}
+
+.player2 .pit {
+    background: #27ae60;
+    color: white;
+    font-weight: bold;
+}
+
+.player2 .pit:hover {
+    background: #229954;
+}
+
+.status {
+    margin-top: 20px;
+    font-size: 1.5em;
+    color: #2c3e50;
+    font-weight: bold;
+    text-shadow: 1px 1px 2px rgba(0,0,0,0.1);
+}
+
+.disabled {
+    opacity: 0.5;
+    pointer-events: none;
+    filter: grayscale(50%);
+}
+
+@media (max-width: 768px) {
+    .store {
+        width: 100px;
+        height: 280px;
+    }
+    .pit {
+        width: 70px;
+        height: 70px;
+        font-size: 1.5em;
+    }
+    .board-container {
+        padding: 20px;
+    }
+}
+
+.ai-controls {
+    margin: 20px 0;
+    padding: 15px;
+    background: #f5f5f5;
+    border-radius: 10px;
+    display: flex;
+    gap: 15px;
+    align-items: center;
+}
+
+.ai-controls label {
+    font-weight: bold;
+    color: #2c3e50;
+}
+
+#ai-algorithm {
+    padding: 8px;
+    border: 2px solid #2980b9;
+    border-radius: 5px;
+    background: white;
+}
+
+#ai-depth {
+    padding: 8px;
+    width: 60px;
+    border: 2px solid #2980b9;
+    border-radius: 5px;
+}
+
+.hidden {
+    display: none !important;
+}
+
+#depth-control {
+    display: inline-block;
+    transition: opacity 0.3s ease;
+}

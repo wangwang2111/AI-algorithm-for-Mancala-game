@@ -1,0 +1,1001 @@
+Player1_Strategy,Player2_Strategy,Player1_Score,Player2_Score,Winner,Moves,Time_Seconds
+Random,Random,8,12,Player2,16,0.0
+Random,Random,12,12,Draw,18,0.0
+Random,Random,25,9,Player1,19,0.0
+Random,Random,6,10,Player2,14,0.0
+Random,Random,12,7,Player1,16,0.0
+Random,Random,14,19,Player2,16,0.0
+Random,Random,11,12,Player2,15,0.0
+Random,Random,14,11,Player1,16,0.0
+Random,Random,18,12,Player1,15,0.0
+Random,Random,22,17,Player1,18,0.0
+Random,Random,17,9,Player1,27,0.001
+Random,Random,11,15,Player2,19,0.0
+Random,Random,22,15,Player1,22,0.0
+Random,Random,7,14,Player2,28,0.001
+Random,Random,5,12,Player2,10,0.0
+Random,Random,5,14,Player2,12,0.0
+Random,Random,14,19,Player2,25,0.0
+Random,Random,17,14,Player1,23,0.0
+Random,Random,29,6,Player1,19,0.0
+Random,Random,21,10,Player1,24,0.0
+Random,Random,14,7,Player1,16,0.0
+Random,Random,9,17,Player2,19,0.0
+Random,Random,14,5,Player1,16,0.0
+Random,Random,15,19,Player2,19,0.0
+Random,Random,24,13,Player1,30,0.001
+Random,Random,8,13,Player2,22,0.0
+Random,Random,18,10,Player1,21,0.0
+Random,Random,14,15,Player2,22,0.0
+Random,Random,10,14,Player2,22,0.0
+Random,Random,9,19,Player2,18,0.0
+Random,Random,18,9,Player1,15,0.0
+Random,Random,15,15,Draw,20,0.0
+Random,Random,13,17,Player2,23,0.0
+Random,Random,12,7,Player1,18,0.001
+Random,Random,20,14,Player1,19,0.0
+Random,Random,17,4,Player1,15,0.0
+Random,Random,7,14,Player2,15,0.0
+Random,Random,8,14,Player2,13,0.0
+Random,Random,5,18,Player2,11,0.0
+Random,Random,24,18,Player1,23,0.0
+Random,Random,13,13,Draw,15,0.0
+Random,Random,26,18,Player1,27,0.001
+Random,Random,20,18,Player1,26,0.001
+Random,Random,21,16,Player1,19,0.001
+Random,Random,20,11,Player1,17,0.0
+Random,Random,11,14,Player2,16,0.0
+Random,Random,21,26,Player2,19,0.0
+Random,Random,16,15,Player1,19,0.0
+Random,Random,12,16,Player2,20,0.0
+Random,Random,21,15,Player1,20,0.0
+Random,Random,14,21,Player2,27,0.0
+Random,Random,9,14,Player2,21,0.0
+Random,Random,5,13,Player2,11,0.0
+Random,Random,15,7,Player1,22,0.0
+Random,Random,17,10,Player1,16,0.0
+Random,Random,11,13,Player2,21,0.0
+Random,Random,21,8,Player1,23,0.0
+Random,Random,7,15,Player2,18,0.0
+Random,Random,5,24,Player2,21,0.0
+Random,Random,21,10,Player1,21,0.0
+Random,Random,13,18,Player2,26,0.0
+Random,Random,8,10,Player2,16,0.0
+Random,Random,15,10,Player1,17,0.0
+Random,Random,24,8,Player1,21,0.0
+Random,Random,15,17,Player2,17,0.0
+Random,Random,17,20,Player2,23,0.0
+Random,Random,17,12,Player1,21,0.0
+Random,Random,25,17,Player1,19,0.0
+Random,Random,34,13,Player1,25,0.0
+Random,Random,18,7,Player1,25,0.0
+Random,Random,35,12,Player1,25,0.0
+Random,Random,17,16,Player1,15,0.0
+Random,Random,19,16,Player1,19,0.0
+Random,Random,8,13,Player2,11,0.0
+Random,Random,15,11,Player1,21,0.0
+Random,Random,20,13,Player1,19,0.0
+Random,Random,14,9,Player1,17,0.0
+Random,Random,7,10,Player2,11,0.0
+Random,Random,6,12,Player2,15,0.0
+Random,Random,15,13,Player1,24,0.0
+Random,Random,12,15,Player2,27,0.0
+Random,Random,7,17,Player2,11,0.0
+Random,Random,8,7,Player1,16,0.0
+Random,Random,25,8,Player1,21,0.0
+Random,Random,8,13,Player2,22,0.0
+Random,Random,19,21,Player2,20,0.0
+Random,Random,6,8,Player2,14,0.0
+Random,Random,9,9,Draw,22,0.0
+Random,Random,6,14,Player2,12,0.0
+Random,Random,20,3,Player1,16,0.0
+Random,Random,6,8,Player2,18,0.0
+Random,Random,9,15,Player2,20,0.0
+Random,Random,12,9,Player1,19,0.0
+Random,Random,7,14,Player2,15,0.0
+Random,Random,9,11,Player2,19,0.0
+Random,Random,24,14,Player1,24,0.0
+Random,Random,11,17,Player2,10,0.0
+Random,Random,11,13,Player2,16,0.0
+Random,Random,9,6,Player1,20,0.0
+Random,Random,15,21,Player2,26,0.0
+Random,Simple Minimax,4,25,Player2,16,0.054
+Random,Simple Minimax,6,29,Player2,22,0.313
+Random,Simple Minimax,8,26,Player2,22,0.106
+Random,Simple Minimax,14,25,Player2,17,0.049
+Random,Simple Minimax,11,26,Player2,22,0.09
+Random,Simple Minimax,4,25,Player2,24,0.218
+Random,Simple Minimax,9,26,Player2,22,0.356
+Random,Simple Minimax,4,18,Player2,13,0.152
+Random,Simple Minimax,8,27,Player2,22,0.181
+Random,Simple Minimax,7,15,Player2,14,0.064
+Random,Simple Minimax,9,20,Player2,14,0.043
+Random,Simple Minimax,8,26,Player2,24,0.273
+Random,Simple Minimax,15,25,Player2,23,0.176
+Random,Simple Minimax,18,27,Player2,23,0.232
+Random,Simple Minimax,8,25,Player2,20,0.064
+Random,Simple Minimax,8,26,Player2,22,0.101
+Random,Simple Minimax,5,26,Player2,12,0.049
+Random,Simple Minimax,13,25,Player2,21,0.064
+Random,Simple Minimax,14,26,Player2,25,0.179
+Random,Simple Minimax,9,25,Player2,23,0.122
+Random,Simple Minimax,5,26,Player2,12,0.05
+Random,Simple Minimax,5,25,Player2,15,0.262
+Random,Simple Minimax,7,21,Player2,20,0.107
+Random,Simple Minimax,11,25,Player2,17,0.034
+Random,Simple Minimax,4,24,Player2,16,0.039
+Random,Simple Minimax,4,18,Player2,13,0.159
+Random,Simple Minimax,8,26,Player2,20,0.071
+Random,Simple Minimax,5,27,Player2,14,1.292
+Random,Simple Minimax,4,22,Player2,13,0.04
+Random,Simple Minimax,18,25,Player2,28,0.112
+Random,Simple Minimax,5,25,Player2,14,0.06
+Random,Simple Minimax,7,25,Player2,17,0.078
+Random,Simple Minimax,5,21,Player2,15,0.171
+Random,Simple Minimax,7,25,Player2,19,0.093
+Random,Simple Minimax,3,25,Player2,16,0.163
+Random,Simple Minimax,7,25,Player2,23,0.191
+Random,Simple Minimax,3,19,Player2,9,0.056
+Random,Simple Minimax,11,25,Player2,16,0.064
+Random,Simple Minimax,16,26,Player2,16,0.113
+Random,Simple Minimax,8,25,Player2,24,0.051
+Random,Simple Minimax,5,27,Player2,14,1.293
+Random,Simple Minimax,5,25,Player2,18,0.161
+Random,Simple Minimax,4,25,Player2,19,0.224
+Random,Simple Minimax,6,23,Player2,14,0.198
+Random,Simple Minimax,5,27,Player2,14,1.432
+Random,Simple Minimax,6,23,Player2,14,0.196
+Random,Simple Minimax,5,18,Player2,16,0.026
+Random,Simple Minimax,8,26,Player2,30,0.481
+Random,Simple Minimax,10,26,Player2,22,0.101
+Random,Simple Minimax,7,25,Player2,17,0.077
+Random,Simple Minimax,10,26,Player2,23,0.077
+Random,Simple Minimax,10,25,Player2,20,0.205
+Random,Simple Minimax,5,33,Player2,22,0.134
+Random,Simple Minimax,13,25,Player2,18,0.065
+Random,Simple Minimax,9,25,Player2,20,0.084
+Random,Simple Minimax,13,34,Player2,30,0.25
+Random,Simple Minimax,9,25,Player2,21,0.107
+Random,Simple Minimax,9,25,Player2,21,0.104
+Random,Simple Minimax,7,25,Player2,18,0.147
+Random,Simple Minimax,5,25,Player2,20,0.107
+Random,Simple Minimax,13,25,Player2,19,0.068
+Random,Simple Minimax,9,26,Player2,18,0.085
+Random,Simple Minimax,9,26,Player2,20,0.068
+Random,Simple Minimax,12,25,Player2,20,0.126
+Random,Simple Minimax,7,26,Player2,17,0.037
+Random,Simple Minimax,4,22,Player2,15,0.222
+Random,Simple Minimax,4,22,Player2,13,0.042
+Random,Simple Minimax,6,25,Player2,20,0.247
+Random,Simple Minimax,6,25,Player2,23,0.344
+Random,Simple Minimax,10,25,Player2,18,0.066
+Random,Simple Minimax,7,18,Player2,18,0.134
+Random,Simple Minimax,7,25,Player2,19,0.115
+Random,Simple Minimax,9,25,Player2,26,0.19
+Random,Simple Minimax,13,26,Player2,23,0.251
+Random,Simple Minimax,4,27,Player2,14,0.398
+Random,Simple Minimax,7,23,Player2,19,0.041
+Random,Simple Minimax,15,25,Player2,20,0.061
+Random,Simple Minimax,4,28,Player2,15,1.35
+Random,Simple Minimax,9,25,Player2,17,0.088
+Random,Simple Minimax,9,20,Player2,14,0.046
+Random,Simple Minimax,6,26,Player2,12,0.053
+Random,Simple Minimax,4,25,Player2,15,0.057
+Random,Simple Minimax,12,25,Player2,22,0.149
+Random,Simple Minimax,5,26,Player2,17,0.136
+Random,Simple Minimax,9,25,Player2,20,0.204
+Random,Simple Minimax,7,26,Player2,21,0.133
+Random,Simple Minimax,10,25,Player2,19,0.09
+Random,Simple Minimax,4,22,Player2,13,0.059
+Random,Simple Minimax,18,25,Player2,18,0.235
+Random,Simple Minimax,8,28,Player2,24,0.204
+Random,Simple Minimax,4,28,Player2,15,1.277
+Random,Simple Minimax,6,26,Player2,15,0.03
+Random,Simple Minimax,11,28,Player2,26,0.253
+Random,Simple Minimax,6,26,Player2,20,0.241
+Random,Simple Minimax,10,30,Player2,25,0.33
+Random,Simple Minimax,6,26,Player2,15,0.06
+Random,Simple Minimax,17,28,Player2,23,0.322
+Random,Simple Minimax,6,24,Player2,12,0.066
+Random,Simple Minimax,3,27,Player2,12,0.114
+Random,Simple Minimax,12,32,Player2,24,0.294
+Random,Minimax Alpha-Beta,15,25,Player2,14,0.525
+Random,Minimax Alpha-Beta,4,25,Player2,21,1.393
+Random,Minimax Alpha-Beta,8,29,Player2,14,0.514
+Random,Minimax Alpha-Beta,3,23,Player2,12,0.485
+Random,Minimax Alpha-Beta,7,25,Player2,20,1.878
+Random,Minimax Alpha-Beta,5,26,Player2,19,0.643
+Random,Minimax Alpha-Beta,4,26,Player2,16,0.322
+Random,Minimax Alpha-Beta,13,25,Player2,14,0.339
+Random,Minimax Alpha-Beta,4,25,Player2,21,1.324
+Random,Minimax Alpha-Beta,7,26,Player2,20,2.07
+Random,Minimax Alpha-Beta,15,25,Player2,14,0.586
+Random,Minimax Alpha-Beta,6,25,Player2,20,0.608
+Random,Minimax Alpha-Beta,7,25,Player2,17,0.655
+Random,Minimax Alpha-Beta,9,26,Player2,20,0.761
+Random,Minimax Alpha-Beta,7,25,Player2,16,0.524
+Random,Minimax Alpha-Beta,11,25,Player2,16,0.471
+Random,Minimax Alpha-Beta,16,25,Player2,23,0.314
+Random,Minimax Alpha-Beta,8,26,Player2,17,0.422
+Random,Minimax Alpha-Beta,21,25,Player2,22,0.457
+Random,Minimax Alpha-Beta,4,25,Player2,18,0.493
+Random,Minimax Alpha-Beta,5,25,Player2,23,1.416
+Random,Minimax Alpha-Beta,5,25,Player2,22,0.837
+Random,Minimax Alpha-Beta,6,26,Player2,18,0.504
+Random,Minimax Alpha-Beta,10,25,Player2,25,2.678
+Random,Minimax Alpha-Beta,16,25,Player2,16,0.46
+Random,Minimax Alpha-Beta,6,25,Player2,21,1.169
+Random,Minimax Alpha-Beta,22,25,Player2,22,0.321
+Random,Minimax Alpha-Beta,16,25,Player2,17,0.345
+Random,Minimax Alpha-Beta,15,25,Player2,20,0.426
+Random,Minimax Alpha-Beta,4,25,Player2,22,0.895
+Random,Minimax Alpha-Beta,14,27,Player2,20,1.649
+Random,Minimax Alpha-Beta,12,25,Player2,18,0.229
+Random,Minimax Alpha-Beta,11,26,Player2,22,1.17
+Random,Minimax Alpha-Beta,19,25,Player2,25,1.045
+Random,Minimax Alpha-Beta,4,26,Player2,16,0.31
+Random,Minimax Alpha-Beta,14,26,Player2,17,1.071
+Random,Minimax Alpha-Beta,4,26,Player2,19,0.701
+Random,Minimax Alpha-Beta,5,26,Player2,17,0.463
+Random,Minimax Alpha-Beta,8,26,Player2,16,0.479
+Random,Minimax Alpha-Beta,4,25,Player2,16,0.485
+Random,Minimax Alpha-Beta,17,25,Player2,18,0.293
+Random,Minimax Alpha-Beta,7,25,Player2,21,0.844
+Random,Minimax Alpha-Beta,5,25,Player2,18,0.453
+Random,Minimax Alpha-Beta,7,25,Player2,19,2.219
+Random,Minimax Alpha-Beta,8,29,Player2,14,0.507
+Random,Minimax Alpha-Beta,5,25,Player2,15,0.388
+Random,Minimax Alpha-Beta,4,24,Player2,12,0.393
+Random,Minimax Alpha-Beta,3,25,Player2,16,0.409
+Random,Minimax Alpha-Beta,5,25,Player2,18,0.466
+Random,Minimax Alpha-Beta,5,25,Player2,23,1.401
+Random,Minimax Alpha-Beta,8,25,Player2,24,0.997
+Random,Minimax Alpha-Beta,10,25,Player2,18,0.409
+Random,Minimax Alpha-Beta,3,23,Player2,12,0.266
+Random,Minimax Alpha-Beta,6,18,Player2,16,0.182
+Random,Minimax Alpha-Beta,6,25,Player2,27,2.515
+Random,Minimax Alpha-Beta,15,25,Player2,14,0.514
+Random,Minimax Alpha-Beta,6,25,Player2,25,1.746
+Random,Minimax Alpha-Beta,10,26,Player2,23,1.68
+Random,Minimax Alpha-Beta,7,27,Player2,25,3.229
+Random,Minimax Alpha-Beta,13,25,Player2,15,0.303
+Random,Minimax Alpha-Beta,3,24,Player2,8,0.413
+Random,Minimax Alpha-Beta,14,25,Player2,16,0.342
+Random,Minimax Alpha-Beta,7,26,Player2,24,0.813
+Random,Minimax Alpha-Beta,19,25,Player2,24,1.359
+Random,Minimax Alpha-Beta,8,25,Player2,20,0.654
+Random,Minimax Alpha-Beta,12,25,Player2,16,1.866
+Random,Minimax Alpha-Beta,7,29,Player2,25,0.772
+Random,Minimax Alpha-Beta,10,25,Player2,18,0.269
+Random,Minimax Alpha-Beta,15,25,Player2,26,0.597
+Random,Minimax Alpha-Beta,13,25,Player2,28,0.459
+Random,Minimax Alpha-Beta,6,20,Player2,18,0.424
+Random,Minimax Alpha-Beta,13,25,Player2,23,0.62
+Random,Minimax Alpha-Beta,10,25,Player2,19,0.557
+Random,Minimax Alpha-Beta,9,25,Player2,16,0.345
+Random,Minimax Alpha-Beta,8,29,Player2,28,2.945
+Random,Minimax Alpha-Beta,10,25,Player2,25,0.978
+Random,Minimax Alpha-Beta,3,25,Player2,16,0.427
+Random,Minimax Alpha-Beta,7,25,Player2,20,1.954
+Random,Minimax Alpha-Beta,4,25,Player2,21,1.333
+Random,Minimax Alpha-Beta,8,25,Player2,17,0.493
+Random,Minimax Alpha-Beta,5,26,Player2,25,6.229
+Random,Minimax Alpha-Beta,10,25,Player2,12,0.54
+Random,Minimax Alpha-Beta,7,26,Player2,24,2.207
+Random,Minimax Alpha-Beta,7,26,Player2,18,0.472
+Random,Minimax Alpha-Beta,9,26,Player2,28,3.245
+Random,Minimax Alpha-Beta,7,25,Player2,21,0.315
+Random,Minimax Alpha-Beta,9,25,Player2,14,1.32
+Random,Minimax Alpha-Beta,10,25,Player2,19,0.672
+Random,Minimax Alpha-Beta,6,26,Player2,12,0.432
+Random,Minimax Alpha-Beta,12,25,Player2,26,1.591
+Random,Minimax Alpha-Beta,8,25,Player2,18,0.49
+Random,Minimax Alpha-Beta,7,26,Player2,19,1.964
+Random,Minimax Alpha-Beta,14,25,Player2,19,0.249
+Random,Minimax Alpha-Beta,6,25,Player2,19,0.78
+Random,Minimax Alpha-Beta,11,25,Player2,15,0.358
+Random,Minimax Alpha-Beta,8,25,Player2,12,0.304
+Random,Minimax Alpha-Beta,16,25,Player2,17,0.301
+Random,Minimax Alpha-Beta,7,25,Player2,16,0.507
+Random,Minimax Alpha-Beta,7,25,Player2,16,1.836
+Random,Minimax Alpha-Beta,10,25,Player2,25,2.648
+Random,Advanced Heuristic,6,26,Player2,20,0.128
+Random,Advanced Heuristic,7,25,Player2,15,0.099
+Random,Advanced Heuristic,8,26,Player2,18,0.333
+Random,Advanced Heuristic,9,27,Player2,19,0.254
+Random,Advanced Heuristic,5,24,Player2,15,0.181
+Random,Advanced Heuristic,6,24,Player2,16,0.137
+Random,Advanced Heuristic,2,23,Player2,7,0.092
+Random,Advanced Heuristic,5,25,Player2,17,0.256
+Random,Advanced Heuristic,15,26,Player2,19,0.112
+Random,Advanced Heuristic,10,25,Player2,19,0.171
+Random,Advanced Heuristic,4,25,Player2,17,0.192
+Random,Advanced Heuristic,6,25,Player2,21,0.101
+Random,Advanced Heuristic,15,26,Player2,20,0.119
+Random,Advanced Heuristic,11,25,Player2,16,0.113
+Random,Advanced Heuristic,9,21,Player2,16,0.085
+Random,Advanced Heuristic,3,23,Player2,8,0.133
+Random,Advanced Heuristic,6,25,Player2,16,0.207
+Random,Advanced Heuristic,7,25,Player2,19,0.206
+Random,Advanced Heuristic,11,33,Player2,14,0.263
+Random,Advanced Heuristic,16,25,Player2,28,0.133
+Random,Advanced Heuristic,2,23,Player2,7,0.089
+Random,Advanced Heuristic,5,25,Player2,19,0.349
+Random,Advanced Heuristic,20,25,Player2,16,0.099
+Random,Advanced Heuristic,8,21,Player2,18,0.217
+Random,Advanced Heuristic,8,27,Player2,14,0.089
+Random,Advanced Heuristic,13,25,Player2,16,0.153
+Random,Advanced Heuristic,3,25,Player2,12,0.102
+Random,Advanced Heuristic,11,25,Player2,22,0.207
+Random,Advanced Heuristic,5,22,Player2,14,0.078
+Random,Advanced Heuristic,13,25,Player2,26,0.074
+Random,Advanced Heuristic,12,25,Player2,20,0.11
+Random,Advanced Heuristic,11,20,Player2,22,0.061
+Random,Advanced Heuristic,7,20,Player2,14,0.197
+Random,Advanced Heuristic,5,24,Player2,15,0.203
+Random,Advanced Heuristic,13,25,Player2,27,0.199
+Random,Advanced Heuristic,4,25,Player2,22,0.352
+Random,Advanced Heuristic,8,25,Player2,13,0.064
+Random,Advanced Heuristic,4,23,Player2,13,0.132
+Random,Advanced Heuristic,4,18,Player2,9,0.101
+Random,Advanced Heuristic,11,25,Player2,16,0.114
+Random,Advanced Heuristic,13,26,Player2,25,0.24
+Random,Advanced Heuristic,6,25,Player2,15,0.215
+Random,Advanced Heuristic,14,25,Player2,16,0.092
+Random,Advanced Heuristic,8,25,Player2,16,0.103
+Random,Advanced Heuristic,6,25,Player2,16,0.122
+Random,Advanced Heuristic,9,27,Player2,17,0.101
+Random,Advanced Heuristic,7,24,Player2,15,0.125
+Random,Advanced Heuristic,9,25,Player2,22,0.159
+Random,Advanced Heuristic,6,25,Player2,16,0.139
+Random,Advanced Heuristic,3,18,Player2,13,0.265
+Random,Advanced Heuristic,12,25,Player2,19,0.32
+Random,Advanced Heuristic,6,24,Player2,16,0.334
+Random,Advanced Heuristic,3,25,Player2,12,0.14
+Random,Advanced Heuristic,10,25,Player2,23,0.234
+Random,Advanced Heuristic,12,26,Player2,20,0.222
+Random,Advanced Heuristic,3,25,Player2,12,0.113
+Random,Advanced Heuristic,15,25,Player2,20,0.123
+Random,Advanced Heuristic,10,25,Player2,18,0.105
+Random,Advanced Heuristic,7,29,Player2,21,0.24
+Random,Advanced Heuristic,8,25,Player2,17,0.113
+Random,Advanced Heuristic,5,25,Player2,12,0.103
+Random,Advanced Heuristic,11,25,Player2,22,0.283
+Random,Advanced Heuristic,2,23,Player2,7,0.116
+Random,Advanced Heuristic,5,21,Player2,12,0.132
+Random,Advanced Heuristic,6,23,Player2,16,0.253
+Random,Advanced Heuristic,7,25,Player2,20,0.162
+Random,Advanced Heuristic,4,20,Player2,11,0.113
+Random,Advanced Heuristic,11,26,Player2,20,0.25
+Random,Advanced Heuristic,4,25,Player2,17,0.181
+Random,Advanced Heuristic,5,25,Player2,14,0.137
+Random,Advanced Heuristic,19,27,Player2,24,0.139
+Random,Advanced Heuristic,6,25,Player2,16,0.115
+Random,Advanced Heuristic,5,22,Player2,15,0.117
+Random,Advanced Heuristic,4,22,Player2,13,0.105
+Random,Advanced Heuristic,4,25,Player2,21,0.336
+Random,Advanced Heuristic,5,24,Player2,20,0.137
+Random,Advanced Heuristic,7,25,Player2,16,0.136
+Random,Advanced Heuristic,5,25,Player2,19,0.16
+Random,Advanced Heuristic,11,25,Player2,24,0.338
+Random,Advanced Heuristic,6,24,Player2,16,0.137
+Random,Advanced Heuristic,10,25,Player2,16,0.091
+Random,Advanced Heuristic,5,25,Player2,14,0.133
+Random,Advanced Heuristic,4,17,Player2,9,0.088
+Random,Advanced Heuristic,9,25,Player2,14,0.237
+Random,Advanced Heuristic,4,25,Player2,11,0.236
+Random,Advanced Heuristic,5,24,Player2,8,0.116
+Random,Advanced Heuristic,8,26,Player2,19,0.265
+Random,Advanced Heuristic,7,25,Player2,11,0.152
+Random,Advanced Heuristic,5,23,Player2,17,0.212
+Random,Advanced Heuristic,5,25,Player2,22,0.259
+Random,Advanced Heuristic,2,23,Player2,7,0.121
+Random,Advanced Heuristic,9,26,Player2,23,0.302
+Random,Advanced Heuristic,15,25,Player2,18,0.12
+Random,Advanced Heuristic,7,21,Player2,15,0.1
+Random,Advanced Heuristic,17,26,Player2,16,0.099
+Random,Advanced Heuristic,13,27,Player2,21,0.132
+Random,Advanced Heuristic,5,25,Player2,18,0.146
+Random,Advanced Heuristic,9,25,Player2,21,0.345
+Random,Advanced Heuristic,2,23,Player2,7,0.103
+Random,Advanced Heuristic,11,25,Player2,20,0.173
+Simple Minimax,Simple Minimax,16,25,Player2,20,0.183
+Simple Minimax,Simple Minimax,16,25,Player2,20,0.12
+Simple Minimax,Simple Minimax,16,25,Player2,20,0.087
+Simple Minimax,Simple Minimax,16,25,Player2,20,0.118
+Simple Minimax,Simple Minimax,16,25,Player2,20,0.097
+Simple Minimax,Simple Minimax,16,25,Player2,20,0.097
+Simple Minimax,Simple Minimax,16,25,Player2,20,0.087
+Simple Minimax,Simple Minimax,16,25,Player2,20,0.111
+Simple Minimax,Simple Minimax,16,25,Player2,20,0.101
+Simple Minimax,Simple Minimax,16,25,Player2,20,0.104
+Simple Minimax,Simple Minimax,16,25,Player2,20,0.094
+Simple Minimax,Simple Minimax,16,25,Player2,20,0.098
+Simple Minimax,Simple Minimax,16,25,Player2,20,0.087
+Simple Minimax,Simple Minimax,16,25,Player2,20,0.112
+Simple Minimax,Simple Minimax,16,25,Player2,20,0.095
+Simple Minimax,Simple Minimax,16,25,Player2,20,0.087
+Simple Minimax,Simple Minimax,16,25,Player2,20,0.091
+Simple Minimax,Simple Minimax,16,25,Player2,20,0.122
+Simple Minimax,Simple Minimax,16,25,Player2,20,0.121
+Simple Minimax,Simple Minimax,16,25,Player2,20,0.091
+Simple Minimax,Simple Minimax,16,25,Player2,20,0.086
+Simple Minimax,Simple Minimax,16,25,Player2,20,0.091
+Simple Minimax,Simple Minimax,16,25,Player2,20,0.137
+Simple Minimax,Simple Minimax,16,25,Player2,20,0.114
+Simple Minimax,Simple Minimax,16,25,Player2,20,0.105
+Simple Minimax,Simple Minimax,16,25,Player2,20,0.085
+Simple Minimax,Simple Minimax,16,25,Player2,20,0.082
+Simple Minimax,Simple Minimax,16,25,Player2,20,0.088
+Simple Minimax,Simple Minimax,16,25,Player2,20,0.085
+Simple Minimax,Simple Minimax,16,25,Player2,20,0.088
+Simple Minimax,Simple Minimax,16,25,Player2,20,0.089
+Simple Minimax,Simple Minimax,16,25,Player2,20,0.082
+Simple Minimax,Simple Minimax,16,25,Player2,20,0.089
+Simple Minimax,Simple Minimax,16,25,Player2,20,0.091
+Simple Minimax,Simple Minimax,16,25,Player2,20,0.102
+Simple Minimax,Simple Minimax,16,25,Player2,20,0.091
+Simple Minimax,Simple Minimax,16,25,Player2,20,0.092
+Simple Minimax,Simple Minimax,16,25,Player2,20,0.088
+Simple Minimax,Simple Minimax,16,25,Player2,20,0.092
+Simple Minimax,Simple Minimax,16,25,Player2,20,0.094
+Simple Minimax,Simple Minimax,16,25,Player2,20,0.091
+Simple Minimax,Simple Minimax,16,25,Player2,20,0.09
+Simple Minimax,Simple Minimax,16,25,Player2,20,0.09
+Simple Minimax,Simple Minimax,16,25,Player2,20,0.093
+Simple Minimax,Simple Minimax,16,25,Player2,20,0.102
+Simple Minimax,Simple Minimax,16,25,Player2,20,0.083
+Simple Minimax,Simple Minimax,16,25,Player2,20,0.082
+Simple Minimax,Simple Minimax,16,25,Player2,20,0.122
+Simple Minimax,Simple Minimax,16,25,Player2,20,0.1
+Simple Minimax,Simple Minimax,16,25,Player2,20,0.09
+Simple Minimax,Simple Minimax,16,25,Player2,20,0.088
+Simple Minimax,Simple Minimax,16,25,Player2,20,0.084
+Simple Minimax,Simple Minimax,16,25,Player2,20,0.085
+Simple Minimax,Simple Minimax,16,25,Player2,20,0.086
+Simple Minimax,Simple Minimax,16,25,Player2,20,0.082
+Simple Minimax,Simple Minimax,16,25,Player2,20,0.098
+Simple Minimax,Simple Minimax,16,25,Player2,20,0.085
+Simple Minimax,Simple Minimax,16,25,Player2,20,0.081
+Simple Minimax,Simple Minimax,16,25,Player2,20,0.081
+Simple Minimax,Simple Minimax,16,25,Player2,20,0.084
+Simple Minimax,Simple Minimax,16,25,Player2,20,0.085
+Simple Minimax,Simple Minimax,16,25,Player2,20,0.089
+Simple Minimax,Simple Minimax,16,25,Player2,20,0.097
+Simple Minimax,Simple Minimax,16,25,Player2,20,0.087
+Simple Minimax,Simple Minimax,16,25,Player2,20,0.082
+Simple Minimax,Simple Minimax,16,25,Player2,20,0.086
+Simple Minimax,Simple Minimax,16,25,Player2,20,0.089
+Simple Minimax,Simple Minimax,16,25,Player2,20,0.097
+Simple Minimax,Simple Minimax,16,25,Player2,20,0.088
+Simple Minimax,Simple Minimax,16,25,Player2,20,0.092
+Simple Minimax,Simple Minimax,16,25,Player2,20,0.088
+Simple Minimax,Simple Minimax,16,25,Player2,20,0.144
+Simple Minimax,Simple Minimax,16,25,Player2,20,0.11
+Simple Minimax,Simple Minimax,16,25,Player2,20,0.088
+Simple Minimax,Simple Minimax,16,25,Player2,20,0.083
+Simple Minimax,Simple Minimax,16,25,Player2,20,0.082
+Simple Minimax,Simple Minimax,16,25,Player2,20,0.084
+Simple Minimax,Simple Minimax,16,25,Player2,20,0.099
+Simple Minimax,Simple Minimax,16,25,Player2,20,0.091
+Simple Minimax,Simple Minimax,16,25,Player2,20,0.082
+Simple Minimax,Simple Minimax,16,25,Player2,20,0.084
+Simple Minimax,Simple Minimax,16,25,Player2,20,0.093
+Simple Minimax,Simple Minimax,16,25,Player2,20,0.087
+Simple Minimax,Simple Minimax,16,25,Player2,20,0.091
+Simple Minimax,Simple Minimax,16,25,Player2,20,0.087
+Simple Minimax,Simple Minimax,16,25,Player2,20,0.106
+Simple Minimax,Simple Minimax,16,25,Player2,20,0.089
+Simple Minimax,Simple Minimax,16,25,Player2,20,0.091
+Simple Minimax,Simple Minimax,16,25,Player2,20,0.093
+Simple Minimax,Simple Minimax,16,25,Player2,20,0.089
+Simple Minimax,Simple Minimax,16,25,Player2,20,0.084
+Simple Minimax,Simple Minimax,16,25,Player2,20,0.083
+Simple Minimax,Simple Minimax,16,25,Player2,20,0.093
+Simple Minimax,Simple Minimax,16,25,Player2,20,0.118
+Simple Minimax,Simple Minimax,16,25,Player2,20,0.092
+Simple Minimax,Simple Minimax,16,25,Player2,20,0.139
+Simple Minimax,Simple Minimax,16,25,Player2,20,0.097
+Simple Minimax,Simple Minimax,16,25,Player2,20,0.085
+Simple Minimax,Simple Minimax,16,25,Player2,20,0.084
+Simple Minimax,Simple Minimax,16,25,Player2,20,0.11
+Simple Minimax,Minimax Alpha-Beta,16,25,Player2,20,0.257
+Simple Minimax,Minimax Alpha-Beta,16,25,Player2,20,0.25
+Simple Minimax,Minimax Alpha-Beta,16,25,Player2,20,0.274
+Simple Minimax,Minimax Alpha-Beta,16,25,Player2,20,0.277
+Simple Minimax,Minimax Alpha-Beta,16,25,Player2,20,0.264
+Simple Minimax,Minimax Alpha-Beta,16,25,Player2,20,0.283
+Simple Minimax,Minimax Alpha-Beta,16,25,Player2,20,0.303
+Simple Minimax,Minimax Alpha-Beta,16,25,Player2,20,0.259
+Simple Minimax,Minimax Alpha-Beta,16,25,Player2,20,0.242
+Simple Minimax,Minimax Alpha-Beta,16,25,Player2,20,0.248
+Simple Minimax,Minimax Alpha-Beta,16,25,Player2,20,0.249
+Simple Minimax,Minimax Alpha-Beta,16,25,Player2,20,0.239
+Simple Minimax,Minimax Alpha-Beta,16,25,Player2,20,0.242
+Simple Minimax,Minimax Alpha-Beta,16,25,Player2,20,0.281
+Simple Minimax,Minimax Alpha-Beta,16,25,Player2,20,0.258
+Simple Minimax,Minimax Alpha-Beta,16,25,Player2,20,0.289
+Simple Minimax,Minimax Alpha-Beta,16,25,Player2,20,0.238
+Simple Minimax,Minimax Alpha-Beta,16,25,Player2,20,0.241
+Simple Minimax,Minimax Alpha-Beta,16,25,Player2,20,0.253
+Simple Minimax,Minimax Alpha-Beta,16,25,Player2,20,0.239
+Simple Minimax,Minimax Alpha-Beta,16,25,Player2,20,0.25
+Simple Minimax,Minimax Alpha-Beta,16,25,Player2,20,0.286
+Simple Minimax,Minimax Alpha-Beta,16,25,Player2,20,0.25
+Simple Minimax,Minimax Alpha-Beta,16,25,Player2,20,0.245
+Simple Minimax,Minimax Alpha-Beta,16,25,Player2,20,0.303
+Simple Minimax,Minimax Alpha-Beta,16,25,Player2,20,0.256
+Simple Minimax,Minimax Alpha-Beta,16,25,Player2,20,0.254
+Simple Minimax,Minimax Alpha-Beta,16,25,Player2,20,0.247
+Simple Minimax,Minimax Alpha-Beta,16,25,Player2,20,0.261
+Simple Minimax,Minimax Alpha-Beta,16,25,Player2,20,0.286
+Simple Minimax,Minimax Alpha-Beta,16,25,Player2,20,0.279
+Simple Minimax,Minimax Alpha-Beta,16,25,Player2,20,0.256
+Simple Minimax,Minimax Alpha-Beta,16,25,Player2,20,0.294
+Simple Minimax,Minimax Alpha-Beta,16,25,Player2,20,0.266
+Simple Minimax,Minimax Alpha-Beta,16,25,Player2,20,0.254
+Simple Minimax,Minimax Alpha-Beta,16,25,Player2,20,0.261
+Simple Minimax,Minimax Alpha-Beta,16,25,Player2,20,0.245
+Simple Minimax,Minimax Alpha-Beta,16,25,Player2,20,0.292
+Simple Minimax,Minimax Alpha-Beta,16,25,Player2,20,0.255
+Simple Minimax,Minimax Alpha-Beta,16,25,Player2,20,0.24
+Simple Minimax,Minimax Alpha-Beta,16,25,Player2,20,0.283
+Simple Minimax,Minimax Alpha-Beta,16,25,Player2,20,0.261
+Simple Minimax,Minimax Alpha-Beta,16,25,Player2,20,0.249
+Simple Minimax,Minimax Alpha-Beta,16,25,Player2,20,0.236
+Simple Minimax,Minimax Alpha-Beta,16,25,Player2,20,0.257
+Simple Minimax,Minimax Alpha-Beta,16,25,Player2,20,0.297
+Simple Minimax,Minimax Alpha-Beta,16,25,Player2,20,0.257
+Simple Minimax,Minimax Alpha-Beta,16,25,Player2,20,0.258
+Simple Minimax,Minimax Alpha-Beta,16,25,Player2,20,0.26
+Simple Minimax,Minimax Alpha-Beta,16,25,Player2,20,0.313
+Simple Minimax,Minimax Alpha-Beta,16,25,Player2,20,0.241
+Simple Minimax,Minimax Alpha-Beta,16,25,Player2,20,0.262
+Simple Minimax,Minimax Alpha-Beta,16,25,Player2,20,0.259
+Simple Minimax,Minimax Alpha-Beta,16,25,Player2,20,0.268
+Simple Minimax,Minimax Alpha-Beta,16,25,Player2,20,0.255
+Simple Minimax,Minimax Alpha-Beta,16,25,Player2,20,0.255
+Simple Minimax,Minimax Alpha-Beta,16,25,Player2,20,0.265
+Simple Minimax,Minimax Alpha-Beta,16,25,Player2,20,0.283
+Simple Minimax,Minimax Alpha-Beta,16,25,Player2,20,0.261
+Simple Minimax,Minimax Alpha-Beta,16,25,Player2,20,0.259
+Simple Minimax,Minimax Alpha-Beta,16,25,Player2,20,0.271
+Simple Minimax,Minimax Alpha-Beta,16,25,Player2,20,0.247
+Simple Minimax,Minimax Alpha-Beta,16,25,Player2,20,0.248
+Simple Minimax,Minimax Alpha-Beta,16,25,Player2,20,0.255
+Simple Minimax,Minimax Alpha-Beta,16,25,Player2,20,0.271
+Simple Minimax,Minimax Alpha-Beta,16,25,Player2,20,0.3
+Simple Minimax,Minimax Alpha-Beta,16,25,Player2,20,0.264
+Simple Minimax,Minimax Alpha-Beta,16,25,Player2,20,0.249
+Simple Minimax,Minimax Alpha-Beta,16,25,Player2,20,0.257
+Simple Minimax,Minimax Alpha-Beta,16,25,Player2,20,0.266
+Simple Minimax,Minimax Alpha-Beta,16,25,Player2,20,0.258
+Simple Minimax,Minimax Alpha-Beta,16,25,Player2,20,0.246
+Simple Minimax,Minimax Alpha-Beta,16,25,Player2,20,0.264
+Simple Minimax,Minimax Alpha-Beta,16,25,Player2,20,0.247
+Simple Minimax,Minimax Alpha-Beta,16,25,Player2,20,0.32
+Simple Minimax,Minimax Alpha-Beta,16,25,Player2,20,0.275
+Simple Minimax,Minimax Alpha-Beta,16,25,Player2,20,0.269
+Simple Minimax,Minimax Alpha-Beta,16,25,Player2,20,0.263
+Simple Minimax,Minimax Alpha-Beta,16,25,Player2,20,0.246
+Simple Minimax,Minimax Alpha-Beta,16,25,Player2,20,0.256
+Simple Minimax,Minimax Alpha-Beta,16,25,Player2,20,0.242
+Simple Minimax,Minimax Alpha-Beta,16,25,Player2,20,0.264
+Simple Minimax,Minimax Alpha-Beta,16,25,Player2,20,0.411
+Simple Minimax,Minimax Alpha-Beta,16,25,Player2,20,0.296
+Simple Minimax,Minimax Alpha-Beta,16,25,Player2,20,0.268
+Simple Minimax,Minimax Alpha-Beta,16,25,Player2,20,0.25
+Simple Minimax,Minimax Alpha-Beta,16,25,Player2,20,0.264
+Simple Minimax,Minimax Alpha-Beta,16,25,Player2,20,0.273
+Simple Minimax,Minimax Alpha-Beta,16,25,Player2,20,0.286
+Simple Minimax,Minimax Alpha-Beta,16,25,Player2,20,0.328
+Simple Minimax,Minimax Alpha-Beta,16,25,Player2,20,0.296
+Simple Minimax,Minimax Alpha-Beta,16,25,Player2,20,0.272
+Simple Minimax,Minimax Alpha-Beta,16,25,Player2,20,0.266
+Simple Minimax,Minimax Alpha-Beta,16,25,Player2,20,0.288
+Simple Minimax,Minimax Alpha-Beta,16,25,Player2,20,0.265
+Simple Minimax,Minimax Alpha-Beta,16,25,Player2,20,0.288
+Simple Minimax,Minimax Alpha-Beta,16,25,Player2,20,0.243
+Simple Minimax,Minimax Alpha-Beta,16,25,Player2,20,0.262
+Simple Minimax,Minimax Alpha-Beta,16,25,Player2,20,0.266
+Simple Minimax,Minimax Alpha-Beta,16,25,Player2,20,0.303
+Simple Minimax,Advanced Heuristic,15,26,Player2,18,0.116
+Simple Minimax,Advanced Heuristic,15,26,Player2,18,0.124
+Simple Minimax,Advanced Heuristic,15,26,Player2,18,0.144
+Simple Minimax,Advanced Heuristic,15,26,Player2,18,0.113
+Simple Minimax,Advanced Heuristic,15,26,Player2,18,0.117
+Simple Minimax,Advanced Heuristic,15,26,Player2,18,0.131
+Simple Minimax,Advanced Heuristic,15,26,Player2,18,0.151
+Simple Minimax,Advanced Heuristic,15,26,Player2,18,0.115
+Simple Minimax,Advanced Heuristic,15,26,Player2,18,0.111
+Simple Minimax,Advanced Heuristic,15,26,Player2,18,0.119
+Simple Minimax,Advanced Heuristic,15,26,Player2,18,0.147
+Simple Minimax,Advanced Heuristic,15,26,Player2,18,0.116
+Simple Minimax,Advanced Heuristic,15,26,Player2,18,0.116
+Simple Minimax,Advanced Heuristic,15,26,Player2,18,0.134
+Simple Minimax,Advanced Heuristic,15,26,Player2,18,0.134
+Simple Minimax,Advanced Heuristic,15,26,Player2,18,0.172
+Simple Minimax,Advanced Heuristic,15,26,Player2,18,0.138
+Simple Minimax,Advanced Heuristic,15,26,Player2,18,0.118
+Simple Minimax,Advanced Heuristic,15,26,Player2,18,0.114
+Simple Minimax,Advanced Heuristic,15,26,Player2,18,0.112
+Simple Minimax,Advanced Heuristic,15,26,Player2,18,0.11
+Simple Minimax,Advanced Heuristic,15,26,Player2,18,0.123
+Simple Minimax,Advanced Heuristic,15,26,Player2,18,0.121
+Simple Minimax,Advanced Heuristic,15,26,Player2,18,0.111
+Simple Minimax,Advanced Heuristic,15,26,Player2,18,0.11
+Simple Minimax,Advanced Heuristic,15,26,Player2,18,0.114
+Simple Minimax,Advanced Heuristic,15,26,Player2,18,0.126
+Simple Minimax,Advanced Heuristic,15,26,Player2,18,0.115
+Simple Minimax,Advanced Heuristic,15,26,Player2,18,0.112
+Simple Minimax,Advanced Heuristic,15,26,Player2,18,0.127
+Simple Minimax,Advanced Heuristic,15,26,Player2,18,0.13
+Simple Minimax,Advanced Heuristic,15,26,Player2,18,0.116
+Simple Minimax,Advanced Heuristic,15,26,Player2,18,0.12
+Simple Minimax,Advanced Heuristic,15,26,Player2,18,0.179
+Simple Minimax,Advanced Heuristic,15,26,Player2,18,0.162
+Simple Minimax,Advanced Heuristic,15,26,Player2,18,0.112
+Simple Minimax,Advanced Heuristic,15,26,Player2,18,0.13
+Simple Minimax,Advanced Heuristic,15,26,Player2,18,0.108
+Simple Minimax,Advanced Heuristic,15,26,Player2,18,0.111
+Simple Minimax,Advanced Heuristic,15,26,Player2,18,0.127
+Simple Minimax,Advanced Heuristic,15,26,Player2,18,0.129
+Simple Minimax,Advanced Heuristic,15,26,Player2,18,0.132
+Simple Minimax,Advanced Heuristic,15,26,Player2,18,0.144
+Simple Minimax,Advanced Heuristic,15,26,Player2,18,0.112
+Simple Minimax,Advanced Heuristic,15,26,Player2,18,0.109
+Simple Minimax,Advanced Heuristic,15,26,Player2,18,0.106
+Simple Minimax,Advanced Heuristic,15,26,Player2,18,0.11
+Simple Minimax,Advanced Heuristic,15,26,Player2,18,0.122
+Simple Minimax,Advanced Heuristic,15,26,Player2,18,0.112
+Simple Minimax,Advanced Heuristic,15,26,Player2,18,0.106
+Simple Minimax,Advanced Heuristic,15,26,Player2,18,0.153
+Simple Minimax,Advanced Heuristic,15,26,Player2,18,0.142
+Simple Minimax,Advanced Heuristic,15,26,Player2,18,0.138
+Simple Minimax,Advanced Heuristic,15,26,Player2,18,0.117
+Simple Minimax,Advanced Heuristic,15,26,Player2,18,0.133
+Simple Minimax,Advanced Heuristic,15,26,Player2,18,0.132
+Simple Minimax,Advanced Heuristic,15,26,Player2,18,0.118
+Simple Minimax,Advanced Heuristic,15,26,Player2,18,0.133
+Simple Minimax,Advanced Heuristic,15,26,Player2,18,0.144
+Simple Minimax,Advanced Heuristic,15,26,Player2,18,0.106
+Simple Minimax,Advanced Heuristic,15,26,Player2,18,0.109
+Simple Minimax,Advanced Heuristic,15,26,Player2,18,0.115
+Simple Minimax,Advanced Heuristic,15,26,Player2,18,0.133
+Simple Minimax,Advanced Heuristic,15,26,Player2,18,0.127
+Simple Minimax,Advanced Heuristic,15,26,Player2,18,0.141
+Simple Minimax,Advanced Heuristic,15,26,Player2,18,0.127
+Simple Minimax,Advanced Heuristic,15,26,Player2,18,0.129
+Simple Minimax,Advanced Heuristic,15,26,Player2,18,0.13
+Simple Minimax,Advanced Heuristic,15,26,Player2,18,0.11
+Simple Minimax,Advanced Heuristic,15,26,Player2,18,0.127
+Simple Minimax,Advanced Heuristic,15,26,Player2,18,0.12
+Simple Minimax,Advanced Heuristic,15,26,Player2,18,0.108
+Simple Minimax,Advanced Heuristic,15,26,Player2,18,0.108
+Simple Minimax,Advanced Heuristic,15,26,Player2,18,0.111
+Simple Minimax,Advanced Heuristic,15,26,Player2,18,0.125
+Simple Minimax,Advanced Heuristic,15,26,Player2,18,0.14
+Simple Minimax,Advanced Heuristic,15,26,Player2,18,0.114
+Simple Minimax,Advanced Heuristic,15,26,Player2,18,0.113
+Simple Minimax,Advanced Heuristic,15,26,Player2,18,0.109
+Simple Minimax,Advanced Heuristic,15,26,Player2,18,0.11
+Simple Minimax,Advanced Heuristic,15,26,Player2,18,0.113
+Simple Minimax,Advanced Heuristic,15,26,Player2,18,0.11
+Simple Minimax,Advanced Heuristic,15,26,Player2,18,0.108
+Simple Minimax,Advanced Heuristic,15,26,Player2,18,0.11
+Simple Minimax,Advanced Heuristic,15,26,Player2,18,0.125
+Simple Minimax,Advanced Heuristic,15,26,Player2,18,0.158
+Simple Minimax,Advanced Heuristic,15,26,Player2,18,0.123
+Simple Minimax,Advanced Heuristic,15,26,Player2,18,0.122
+Simple Minimax,Advanced Heuristic,15,26,Player2,18,0.135
+Simple Minimax,Advanced Heuristic,15,26,Player2,18,0.121
+Simple Minimax,Advanced Heuristic,15,26,Player2,18,0.106
+Simple Minimax,Advanced Heuristic,15,26,Player2,18,0.107
+Simple Minimax,Advanced Heuristic,15,26,Player2,18,0.152
+Simple Minimax,Advanced Heuristic,15,26,Player2,18,0.11
+Simple Minimax,Advanced Heuristic,15,26,Player2,18,0.109
+Simple Minimax,Advanced Heuristic,15,26,Player2,18,0.111
+Simple Minimax,Advanced Heuristic,15,26,Player2,18,0.108
+Simple Minimax,Advanced Heuristic,15,26,Player2,18,0.107
+Simple Minimax,Advanced Heuristic,15,26,Player2,18,0.108
+Simple Minimax,Advanced Heuristic,15,26,Player2,18,0.127
+Minimax Alpha-Beta,Minimax Alpha-Beta,15,19,Player2,18,0.523
+Minimax Alpha-Beta,Minimax Alpha-Beta,15,19,Player2,18,0.458
+Minimax Alpha-Beta,Minimax Alpha-Beta,15,19,Player2,18,0.553
+Minimax Alpha-Beta,Minimax Alpha-Beta,15,19,Player2,18,0.43
+Minimax Alpha-Beta,Minimax Alpha-Beta,15,19,Player2,18,0.471
+Minimax Alpha-Beta,Minimax Alpha-Beta,15,19,Player2,18,0.474
+Minimax Alpha-Beta,Minimax Alpha-Beta,15,19,Player2,18,0.511
+Minimax Alpha-Beta,Minimax Alpha-Beta,15,19,Player2,18,0.443
+Minimax Alpha-Beta,Minimax Alpha-Beta,15,19,Player2,18,0.452
+Minimax Alpha-Beta,Minimax Alpha-Beta,15,19,Player2,18,0.469
+Minimax Alpha-Beta,Minimax Alpha-Beta,15,19,Player2,18,0.449
+Minimax Alpha-Beta,Minimax Alpha-Beta,15,19,Player2,18,0.495
+Minimax Alpha-Beta,Minimax Alpha-Beta,15,19,Player2,18,0.453
+Minimax Alpha-Beta,Minimax Alpha-Beta,15,19,Player2,18,0.448
+Minimax Alpha-Beta,Minimax Alpha-Beta,15,19,Player2,18,0.502
+Minimax Alpha-Beta,Minimax Alpha-Beta,15,19,Player2,18,0.497
+Minimax Alpha-Beta,Minimax Alpha-Beta,15,19,Player2,18,0.442
+Minimax Alpha-Beta,Minimax Alpha-Beta,15,19,Player2,18,0.46
+Minimax Alpha-Beta,Minimax Alpha-Beta,15,19,Player2,18,0.456
+Minimax Alpha-Beta,Minimax Alpha-Beta,15,19,Player2,18,0.44
+Minimax Alpha-Beta,Minimax Alpha-Beta,15,19,Player2,18,0.545
+Minimax Alpha-Beta,Minimax Alpha-Beta,15,19,Player2,18,0.466
+Minimax Alpha-Beta,Minimax Alpha-Beta,15,19,Player2,18,0.458
+Minimax Alpha-Beta,Minimax Alpha-Beta,15,19,Player2,18,0.508
+Minimax Alpha-Beta,Minimax Alpha-Beta,15,19,Player2,18,0.447
+Minimax Alpha-Beta,Minimax Alpha-Beta,15,19,Player2,18,0.512
+Minimax Alpha-Beta,Minimax Alpha-Beta,15,19,Player2,18,0.448
+Minimax Alpha-Beta,Minimax Alpha-Beta,15,19,Player2,18,0.564
+Minimax Alpha-Beta,Minimax Alpha-Beta,15,19,Player2,18,0.462
+Minimax Alpha-Beta,Minimax Alpha-Beta,15,19,Player2,18,0.506
+Minimax Alpha-Beta,Minimax Alpha-Beta,15,19,Player2,18,0.553
+Minimax Alpha-Beta,Minimax Alpha-Beta,15,19,Player2,18,0.452
+Minimax Alpha-Beta,Minimax Alpha-Beta,15,19,Player2,18,0.442
+Minimax Alpha-Beta,Minimax Alpha-Beta,15,19,Player2,18,0.435
+Minimax Alpha-Beta,Minimax Alpha-Beta,15,19,Player2,18,0.465
+Minimax Alpha-Beta,Minimax Alpha-Beta,15,19,Player2,18,0.497
+Minimax Alpha-Beta,Minimax Alpha-Beta,15,19,Player2,18,0.472
+Minimax Alpha-Beta,Minimax Alpha-Beta,15,19,Player2,18,0.45
+Minimax Alpha-Beta,Minimax Alpha-Beta,15,19,Player2,18,0.5
+Minimax Alpha-Beta,Minimax Alpha-Beta,15,19,Player2,18,0.503
+Minimax Alpha-Beta,Minimax Alpha-Beta,15,19,Player2,18,0.492
+Minimax Alpha-Beta,Minimax Alpha-Beta,15,19,Player2,18,0.464
+Minimax Alpha-Beta,Minimax Alpha-Beta,15,19,Player2,18,0.52
+Minimax Alpha-Beta,Minimax Alpha-Beta,15,19,Player2,18,0.45
+Minimax Alpha-Beta,Minimax Alpha-Beta,15,19,Player2,18,0.534
+Minimax Alpha-Beta,Minimax Alpha-Beta,15,19,Player2,18,0.502
+Minimax Alpha-Beta,Minimax Alpha-Beta,15,19,Player2,18,0.57
+Minimax Alpha-Beta,Minimax Alpha-Beta,15,19,Player2,18,0.57
+Minimax Alpha-Beta,Minimax Alpha-Beta,15,19,Player2,18,0.603
+Minimax Alpha-Beta,Minimax Alpha-Beta,15,19,Player2,18,0.53
+Minimax Alpha-Beta,Minimax Alpha-Beta,15,19,Player2,18,0.468
+Minimax Alpha-Beta,Minimax Alpha-Beta,15,19,Player2,18,0.478
+Minimax Alpha-Beta,Minimax Alpha-Beta,15,19,Player2,18,0.549
+Minimax Alpha-Beta,Minimax Alpha-Beta,15,19,Player2,18,0.504
+Minimax Alpha-Beta,Minimax Alpha-Beta,15,19,Player2,18,0.496
+Minimax Alpha-Beta,Minimax Alpha-Beta,15,19,Player2,18,0.452
+Minimax Alpha-Beta,Minimax Alpha-Beta,15,19,Player2,18,0.49
+Minimax Alpha-Beta,Minimax Alpha-Beta,15,19,Player2,18,0.511
+Minimax Alpha-Beta,Minimax Alpha-Beta,15,19,Player2,18,0.445
+Minimax Alpha-Beta,Minimax Alpha-Beta,15,19,Player2,18,0.604
+Minimax Alpha-Beta,Minimax Alpha-Beta,15,19,Player2,18,0.487
+Minimax Alpha-Beta,Minimax Alpha-Beta,15,19,Player2,18,0.557
+Minimax Alpha-Beta,Minimax Alpha-Beta,15,19,Player2,18,0.477
+Minimax Alpha-Beta,Minimax Alpha-Beta,15,19,Player2,18,0.478
+Minimax Alpha-Beta,Minimax Alpha-Beta,15,19,Player2,18,0.443
+Minimax Alpha-Beta,Minimax Alpha-Beta,15,19,Player2,18,0.53
+Minimax Alpha-Beta,Minimax Alpha-Beta,15,19,Player2,18,0.477
+Minimax Alpha-Beta,Minimax Alpha-Beta,15,19,Player2,18,0.466
+Minimax Alpha-Beta,Minimax Alpha-Beta,15,19,Player2,18,0.472
+Minimax Alpha-Beta,Minimax Alpha-Beta,15,19,Player2,18,0.483
+Minimax Alpha-Beta,Minimax Alpha-Beta,15,19,Player2,18,0.473
+Minimax Alpha-Beta,Minimax Alpha-Beta,15,19,Player2,18,0.499
+Minimax Alpha-Beta,Minimax Alpha-Beta,15,19,Player2,18,0.475
+Minimax Alpha-Beta,Minimax Alpha-Beta,15,19,Player2,18,0.455
+Minimax Alpha-Beta,Minimax Alpha-Beta,15,19,Player2,18,0.497
+Minimax Alpha-Beta,Minimax Alpha-Beta,15,19,Player2,18,0.467
+Minimax Alpha-Beta,Minimax Alpha-Beta,15,19,Player2,18,0.473
+Minimax Alpha-Beta,Minimax Alpha-Beta,15,19,Player2,18,0.432
+Minimax Alpha-Beta,Minimax Alpha-Beta,15,19,Player2,18,0.507
+Minimax Alpha-Beta,Minimax Alpha-Beta,15,19,Player2,18,0.441
+Minimax Alpha-Beta,Minimax Alpha-Beta,15,19,Player2,18,0.524
+Minimax Alpha-Beta,Minimax Alpha-Beta,15,19,Player2,18,0.434
+Minimax Alpha-Beta,Minimax Alpha-Beta,15,19,Player2,18,0.458
+Minimax Alpha-Beta,Minimax Alpha-Beta,15,19,Player2,18,0.449
+Minimax Alpha-Beta,Minimax Alpha-Beta,15,19,Player2,18,0.437
+Minimax Alpha-Beta,Minimax Alpha-Beta,15,19,Player2,18,0.499
+Minimax Alpha-Beta,Minimax Alpha-Beta,15,19,Player2,18,0.441
+Minimax Alpha-Beta,Minimax Alpha-Beta,15,19,Player2,18,0.465
+Minimax Alpha-Beta,Minimax Alpha-Beta,15,19,Player2,18,0.438
+Minimax Alpha-Beta,Minimax Alpha-Beta,15,19,Player2,18,0.46
+Minimax Alpha-Beta,Minimax Alpha-Beta,15,19,Player2,18,0.55
+Minimax Alpha-Beta,Minimax Alpha-Beta,15,19,Player2,18,0.496
+Minimax Alpha-Beta,Minimax Alpha-Beta,15,19,Player2,18,0.449
+Minimax Alpha-Beta,Minimax Alpha-Beta,15,19,Player2,18,0.457
+Minimax Alpha-Beta,Minimax Alpha-Beta,15,19,Player2,18,0.44
+Minimax Alpha-Beta,Minimax Alpha-Beta,15,19,Player2,18,0.535
+Minimax Alpha-Beta,Minimax Alpha-Beta,15,19,Player2,18,0.436
+Minimax Alpha-Beta,Minimax Alpha-Beta,15,19,Player2,18,0.46
+Minimax Alpha-Beta,Minimax Alpha-Beta,15,19,Player2,18,0.543
+Minimax Alpha-Beta,Minimax Alpha-Beta,15,19,Player2,18,0.47
+Minimax Alpha-Beta,Advanced Heuristic,14,16,Player2,19,0.366
+Minimax Alpha-Beta,Advanced Heuristic,14,16,Player2,19,0.31
+Minimax Alpha-Beta,Advanced Heuristic,14,16,Player2,19,0.336
+Minimax Alpha-Beta,Advanced Heuristic,14,16,Player2,19,0.336
+Minimax Alpha-Beta,Advanced Heuristic,14,16,Player2,19,0.308
+Minimax Alpha-Beta,Advanced Heuristic,14,16,Player2,19,0.281
+Minimax Alpha-Beta,Advanced Heuristic,14,16,Player2,19,0.307
+Minimax Alpha-Beta,Advanced Heuristic,14,16,Player2,19,0.329
+Minimax Alpha-Beta,Advanced Heuristic,14,16,Player2,19,0.292
+Minimax Alpha-Beta,Advanced Heuristic,14,16,Player2,19,0.304
+Minimax Alpha-Beta,Advanced Heuristic,14,16,Player2,19,0.281
+Minimax Alpha-Beta,Advanced Heuristic,14,16,Player2,19,0.323
+Minimax Alpha-Beta,Advanced Heuristic,14,16,Player2,19,0.381
+Minimax Alpha-Beta,Advanced Heuristic,14,16,Player2,19,0.323
+Minimax Alpha-Beta,Advanced Heuristic,14,16,Player2,19,0.359
+Minimax Alpha-Beta,Advanced Heuristic,14,16,Player2,19,0.312
+Minimax Alpha-Beta,Advanced Heuristic,14,16,Player2,19,0.294
+Minimax Alpha-Beta,Advanced Heuristic,14,16,Player2,19,0.309
+Minimax Alpha-Beta,Advanced Heuristic,14,16,Player2,19,0.299
+Minimax Alpha-Beta,Advanced Heuristic,14,16,Player2,19,0.329
+Minimax Alpha-Beta,Advanced Heuristic,14,16,Player2,19,0.311
+Minimax Alpha-Beta,Advanced Heuristic,14,16,Player2,19,0.386
+Minimax Alpha-Beta,Advanced Heuristic,14,16,Player2,19,0.308
+Minimax Alpha-Beta,Advanced Heuristic,14,16,Player2,19,0.319
+Minimax Alpha-Beta,Advanced Heuristic,14,16,Player2,19,0.328
+Minimax Alpha-Beta,Advanced Heuristic,14,16,Player2,19,0.318
+Minimax Alpha-Beta,Advanced Heuristic,14,16,Player2,19,0.313
+Minimax Alpha-Beta,Advanced Heuristic,14,16,Player2,19,0.293
+Minimax Alpha-Beta,Advanced Heuristic,14,16,Player2,19,0.358
+Minimax Alpha-Beta,Advanced Heuristic,14,16,Player2,19,0.308
+Minimax Alpha-Beta,Advanced Heuristic,14,16,Player2,19,0.361
+Minimax Alpha-Beta,Advanced Heuristic,14,16,Player2,19,0.33
+Minimax Alpha-Beta,Advanced Heuristic,14,16,Player2,19,0.327
+Minimax Alpha-Beta,Advanced Heuristic,14,16,Player2,19,0.347
+Minimax Alpha-Beta,Advanced Heuristic,14,16,Player2,19,0.32
+Minimax Alpha-Beta,Advanced Heuristic,14,16,Player2,19,0.332
+Minimax Alpha-Beta,Advanced Heuristic,14,16,Player2,19,0.349
+Minimax Alpha-Beta,Advanced Heuristic,14,16,Player2,19,0.329
+Minimax Alpha-Beta,Advanced Heuristic,14,16,Player2,19,0.324
+Minimax Alpha-Beta,Advanced Heuristic,14,16,Player2,19,0.341
+Minimax Alpha-Beta,Advanced Heuristic,14,16,Player2,19,0.336
+Minimax Alpha-Beta,Advanced Heuristic,14,16,Player2,19,0.348
+Minimax Alpha-Beta,Advanced Heuristic,14,16,Player2,19,0.29
+Minimax Alpha-Beta,Advanced Heuristic,14,16,Player2,19,0.402
+Minimax Alpha-Beta,Advanced Heuristic,14,16,Player2,19,0.3
+Minimax Alpha-Beta,Advanced Heuristic,14,16,Player2,19,0.34
+Minimax Alpha-Beta,Advanced Heuristic,14,16,Player2,19,0.349
+Minimax Alpha-Beta,Advanced Heuristic,14,16,Player2,19,0.305
+Minimax Alpha-Beta,Advanced Heuristic,14,16,Player2,19,0.34
+Minimax Alpha-Beta,Advanced Heuristic,14,16,Player2,19,0.312
+Minimax Alpha-Beta,Advanced Heuristic,14,16,Player2,19,0.333
+Minimax Alpha-Beta,Advanced Heuristic,14,16,Player2,19,0.345
+Minimax Alpha-Beta,Advanced Heuristic,14,16,Player2,19,0.333
+Minimax Alpha-Beta,Advanced Heuristic,14,16,Player2,19,0.309
+Minimax Alpha-Beta,Advanced Heuristic,14,16,Player2,19,0.307
+Minimax Alpha-Beta,Advanced Heuristic,14,16,Player2,19,0.37
+Minimax Alpha-Beta,Advanced Heuristic,14,16,Player2,19,0.317
+Minimax Alpha-Beta,Advanced Heuristic,14,16,Player2,19,0.33
+Minimax Alpha-Beta,Advanced Heuristic,14,16,Player2,19,0.334
+Minimax Alpha-Beta,Advanced Heuristic,14,16,Player2,19,0.308
+Minimax Alpha-Beta,Advanced Heuristic,14,16,Player2,19,0.321
+Minimax Alpha-Beta,Advanced Heuristic,14,16,Player2,19,0.323
+Minimax Alpha-Beta,Advanced Heuristic,14,16,Player2,19,0.376
+Minimax Alpha-Beta,Advanced Heuristic,14,16,Player2,19,0.294
+Minimax Alpha-Beta,Advanced Heuristic,14,16,Player2,19,0.317
+Minimax Alpha-Beta,Advanced Heuristic,14,16,Player2,19,0.309
+Minimax Alpha-Beta,Advanced Heuristic,14,16,Player2,19,0.311
+Minimax Alpha-Beta,Advanced Heuristic,14,16,Player2,19,0.312
+Minimax Alpha-Beta,Advanced Heuristic,14,16,Player2,19,0.35
+Minimax Alpha-Beta,Advanced Heuristic,14,16,Player2,19,0.324
+Minimax Alpha-Beta,Advanced Heuristic,14,16,Player2,19,0.314
+Minimax Alpha-Beta,Advanced Heuristic,14,16,Player2,19,0.337
+Minimax Alpha-Beta,Advanced Heuristic,14,16,Player2,19,0.319
+Minimax Alpha-Beta,Advanced Heuristic,14,16,Player2,19,0.321
+Minimax Alpha-Beta,Advanced Heuristic,14,16,Player2,19,0.311
+Minimax Alpha-Beta,Advanced Heuristic,14,16,Player2,19,0.324
+Minimax Alpha-Beta,Advanced Heuristic,14,16,Player2,19,0.329
+Minimax Alpha-Beta,Advanced Heuristic,14,16,Player2,19,0.319
+Minimax Alpha-Beta,Advanced Heuristic,14,16,Player2,19,0.345
+Minimax Alpha-Beta,Advanced Heuristic,14,16,Player2,19,0.32
+Minimax Alpha-Beta,Advanced Heuristic,14,16,Player2,19,0.341
+Minimax Alpha-Beta,Advanced Heuristic,14,16,Player2,19,0.353
+Minimax Alpha-Beta,Advanced Heuristic,14,16,Player2,19,0.368
+Minimax Alpha-Beta,Advanced Heuristic,14,16,Player2,19,0.302
+Minimax Alpha-Beta,Advanced Heuristic,14,16,Player2,19,0.305
+Minimax Alpha-Beta,Advanced Heuristic,14,16,Player2,19,0.322
+Minimax Alpha-Beta,Advanced Heuristic,14,16,Player2,19,0.324
+Minimax Alpha-Beta,Advanced Heuristic,14,16,Player2,19,0.315
+Minimax Alpha-Beta,Advanced Heuristic,14,16,Player2,19,0.392
+Minimax Alpha-Beta,Advanced Heuristic,14,16,Player2,19,0.343
+Minimax Alpha-Beta,Advanced Heuristic,14,16,Player2,19,0.291
+Minimax Alpha-Beta,Advanced Heuristic,14,16,Player2,19,0.305
+Minimax Alpha-Beta,Advanced Heuristic,14,16,Player2,19,0.336
+Minimax Alpha-Beta,Advanced Heuristic,14,16,Player2,19,0.285
+Minimax Alpha-Beta,Advanced Heuristic,14,16,Player2,19,0.295
+Minimax Alpha-Beta,Advanced Heuristic,14,16,Player2,19,0.311
+Minimax Alpha-Beta,Advanced Heuristic,14,16,Player2,19,0.369
+Minimax Alpha-Beta,Advanced Heuristic,14,16,Player2,19,0.34
+Minimax Alpha-Beta,Advanced Heuristic,14,16,Player2,19,0.296
+Minimax Alpha-Beta,Advanced Heuristic,14,16,Player2,19,0.296
+Advanced Heuristic,Advanced Heuristic,18,25,Player2,20,0.218
+Advanced Heuristic,Advanced Heuristic,18,25,Player2,20,0.206
+Advanced Heuristic,Advanced Heuristic,18,25,Player2,20,0.21
+Advanced Heuristic,Advanced Heuristic,18,25,Player2,20,0.27
+Advanced Heuristic,Advanced Heuristic,18,25,Player2,20,0.198
+Advanced Heuristic,Advanced Heuristic,18,25,Player2,20,0.23
+Advanced Heuristic,Advanced Heuristic,18,25,Player2,20,0.209
+Advanced Heuristic,Advanced Heuristic,18,25,Player2,20,0.2
+Advanced Heuristic,Advanced Heuristic,18,25,Player2,20,0.2
+Advanced Heuristic,Advanced Heuristic,18,25,Player2,20,0.215
+Advanced Heuristic,Advanced Heuristic,18,25,Player2,20,0.215
+Advanced Heuristic,Advanced Heuristic,18,25,Player2,20,0.204
+Advanced Heuristic,Advanced Heuristic,18,25,Player2,20,0.233
+Advanced Heuristic,Advanced Heuristic,18,25,Player2,20,0.205
+Advanced Heuristic,Advanced Heuristic,18,25,Player2,20,0.203
+Advanced Heuristic,Advanced Heuristic,18,25,Player2,20,0.259
+Advanced Heuristic,Advanced Heuristic,18,25,Player2,20,0.258
+Advanced Heuristic,Advanced Heuristic,18,25,Player2,20,0.211
+Advanced Heuristic,Advanced Heuristic,18,25,Player2,20,0.211
+Advanced Heuristic,Advanced Heuristic,18,25,Player2,20,0.198
+Advanced Heuristic,Advanced Heuristic,18,25,Player2,20,0.223
+Advanced Heuristic,Advanced Heuristic,18,25,Player2,20,0.232
+Advanced Heuristic,Advanced Heuristic,18,25,Player2,20,0.201
+Advanced Heuristic,Advanced Heuristic,18,25,Player2,20,0.206
+Advanced Heuristic,Advanced Heuristic,18,25,Player2,20,0.206
+Advanced Heuristic,Advanced Heuristic,18,25,Player2,20,0.247
+Advanced Heuristic,Advanced Heuristic,18,25,Player2,20,0.255
+Advanced Heuristic,Advanced Heuristic,18,25,Player2,20,0.217
+Advanced Heuristic,Advanced Heuristic,18,25,Player2,20,0.21
+Advanced Heuristic,Advanced Heuristic,18,25,Player2,20,0.222
+Advanced Heuristic,Advanced Heuristic,18,25,Player2,20,0.223
+Advanced Heuristic,Advanced Heuristic,18,25,Player2,20,0.204
+Advanced Heuristic,Advanced Heuristic,18,25,Player2,20,0.194
+Advanced Heuristic,Advanced Heuristic,18,25,Player2,20,0.205
+Advanced Heuristic,Advanced Heuristic,18,25,Player2,20,0.197
+Advanced Heuristic,Advanced Heuristic,18,25,Player2,20,0.271
+Advanced Heuristic,Advanced Heuristic,18,25,Player2,20,0.223
+Advanced Heuristic,Advanced Heuristic,18,25,Player2,20,0.197
+Advanced Heuristic,Advanced Heuristic,18,25,Player2,20,0.213
+Advanced Heuristic,Advanced Heuristic,18,25,Player2,20,0.2
+Advanced Heuristic,Advanced Heuristic,18,25,Player2,20,0.217
+Advanced Heuristic,Advanced Heuristic,18,25,Player2,20,0.193
+Advanced Heuristic,Advanced Heuristic,18,25,Player2,20,0.199
+Advanced Heuristic,Advanced Heuristic,18,25,Player2,20,0.205
+Advanced Heuristic,Advanced Heuristic,18,25,Player2,20,0.201
+Advanced Heuristic,Advanced Heuristic,18,25,Player2,20,0.233
+Advanced Heuristic,Advanced Heuristic,18,25,Player2,20,0.24
+Advanced Heuristic,Advanced Heuristic,18,25,Player2,20,0.208
+Advanced Heuristic,Advanced Heuristic,18,25,Player2,20,0.202
+Advanced Heuristic,Advanced Heuristic,18,25,Player2,20,0.207
+Advanced Heuristic,Advanced Heuristic,18,25,Player2,20,0.193
+Advanced Heuristic,Advanced Heuristic,18,25,Player2,20,0.196
+Advanced Heuristic,Advanced Heuristic,18,25,Player2,20,0.205
+Advanced Heuristic,Advanced Heuristic,18,25,Player2,20,0.199
+Advanced Heuristic,Advanced Heuristic,18,25,Player2,20,0.211
+Advanced Heuristic,Advanced Heuristic,18,25,Player2,20,0.202
+Advanced Heuristic,Advanced Heuristic,18,25,Player2,20,0.196
+Advanced Heuristic,Advanced Heuristic,18,25,Player2,20,0.23
+Advanced Heuristic,Advanced Heuristic,18,25,Player2,20,0.205
+Advanced Heuristic,Advanced Heuristic,18,25,Player2,20,0.209
+Advanced Heuristic,Advanced Heuristic,18,25,Player2,20,0.21
+Advanced Heuristic,Advanced Heuristic,18,25,Player2,20,0.205
+Advanced Heuristic,Advanced Heuristic,18,25,Player2,20,0.203
+Advanced Heuristic,Advanced Heuristic,18,25,Player2,20,0.198
+Advanced Heuristic,Advanced Heuristic,18,25,Player2,20,0.216
+Advanced Heuristic,Advanced Heuristic,18,25,Player2,20,0.201
+Advanced Heuristic,Advanced Heuristic,18,25,Player2,20,0.222
+Advanced Heuristic,Advanced Heuristic,18,25,Player2,20,0.216
+Advanced Heuristic,Advanced Heuristic,18,25,Player2,20,0.233
+Advanced Heuristic,Advanced Heuristic,18,25,Player2,20,0.201
+Advanced Heuristic,Advanced Heuristic,18,25,Player2,20,0.199
+Advanced Heuristic,Advanced Heuristic,18,25,Player2,20,0.199
+Advanced Heuristic,Advanced Heuristic,18,25,Player2,20,0.196
+Advanced Heuristic,Advanced Heuristic,18,25,Player2,20,0.2
+Advanced Heuristic,Advanced Heuristic,18,25,Player2,20,0.216
+Advanced Heuristic,Advanced Heuristic,18,25,Player2,20,0.196
+Advanced Heuristic,Advanced Heuristic,18,25,Player2,20,0.241
+Advanced Heuristic,Advanced Heuristic,18,25,Player2,20,0.197
+Advanced Heuristic,Advanced Heuristic,18,25,Player2,20,0.257
+Advanced Heuristic,Advanced Heuristic,18,25,Player2,20,0.22
+Advanced Heuristic,Advanced Heuristic,18,25,Player2,20,0.223
+Advanced Heuristic,Advanced Heuristic,18,25,Player2,20,0.21
+Advanced Heuristic,Advanced Heuristic,18,25,Player2,20,0.205
+Advanced Heuristic,Advanced Heuristic,18,25,Player2,20,0.229
+Advanced Heuristic,Advanced Heuristic,18,25,Player2,20,0.201
+Advanced Heuristic,Advanced Heuristic,18,25,Player2,20,0.231
+Advanced Heuristic,Advanced Heuristic,18,25,Player2,20,0.198
+Advanced Heuristic,Advanced Heuristic,18,25,Player2,20,0.202
+Advanced Heuristic,Advanced Heuristic,18,25,Player2,20,0.239
+Advanced Heuristic,Advanced Heuristic,18,25,Player2,20,0.22
+Advanced Heuristic,Advanced Heuristic,18,25,Player2,20,0.203
+Advanced Heuristic,Advanced Heuristic,18,25,Player2,20,0.202
+Advanced Heuristic,Advanced Heuristic,18,25,Player2,20,0.227
+Advanced Heuristic,Advanced Heuristic,18,25,Player2,20,0.204
+Advanced Heuristic,Advanced Heuristic,18,25,Player2,20,0.215
+Advanced Heuristic,Advanced Heuristic,18,25,Player2,20,0.252
+Advanced Heuristic,Advanced Heuristic,18,25,Player2,20,0.209
+Advanced Heuristic,Advanced Heuristic,18,25,Player2,20,0.234
+Advanced Heuristic,Advanced Heuristic,18,25,Player2,20,0.21
+Advanced Heuristic,Advanced Heuristic,18,25,Player2,20,0.28
