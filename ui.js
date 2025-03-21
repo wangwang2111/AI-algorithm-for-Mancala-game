@@ -1,5 +1,5 @@
-import { MancalaGame } from './game.js';
-import { MancalaAI } from './ai.js';
+import { MancalaGame } from './components/game.js';
+import { MancalaAI } from './components/ai.js';
 
 // ui.js
 class MancalaUI {
@@ -60,7 +60,7 @@ class MancalaUI {
         pit.classList.add('clicked'); // Add clicked class for visual feedback
         setTimeout(() => {
             pit.classList.remove('clicked'); // Remove clicked class after animation
-        }, 500); // Match the duration of the CSS transition
+        }, 300); // Match the duration of the CSS transition
         this.animateStones(pitIndex);
         this.updateUI();
         if (this.game.gameActive && this.game.currentPlayer === 1) {
@@ -87,20 +87,26 @@ class MancalaUI {
     let currentIndex = pitIndex;
     stoneElements.forEach((stone, index) => {
         setTimeout(() => {
-            currentIndex = (currentIndex + 1) % 14;
+            currentIndex = (currentIndex + 1) % 14; // Move to the next pit
             const nextPit = this.pits[currentIndex];
-            const rect = nextPit.getBoundingClientRect();
+
+            // Calculate the position of the next pit relative to the current pit
+            const nextPitRect = nextPit.getBoundingClientRect();
+            const currentPitRect = pit.getBoundingClientRect();
+
+            // Move the stone to the next pit
             stone.style.position = 'absolute';
-            stone.style.left = `${rect.left - pit.getBoundingClientRect().left}px`;
-            stone.style.top = `${rect.top - pit.getBoundingClientRect().top}px`;
-            stone.style.transition = 'all 1s ease';
-        }, index * 1000); // Delay each stone's animation
+            stone.style.left = `${nextPitRect.left - currentPitRect.left}px`;
+            stone.style.top = `${nextPitRect.top - currentPitRect.top}px`;
+            stone.style.transition = 'all 1s ease'; // Smooth transition
+        }, index * 200); // Delay each stone's animation by 200ms
     });
 
     // Remove stones after animation
     setTimeout(() => {
         stoneElements.forEach(stone => stone.remove());
-    }, stones * 1000 + 500);
+        this.updateUI(); // Update the UI after the animation completes
+    }, stones * 200 + 1000); // Wait for all animations to complete before removing stones
   }
 
   async makeAIMove() {

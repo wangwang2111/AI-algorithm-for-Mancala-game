@@ -14,7 +14,7 @@ def heuristic_move_value(board, move, maximizing_for):
     # 2. Immediate Rewards
     # - Extra turns
     if landing_pit == 6:  # Landing in own store
-        value += 15  # Highest priority
+        value += 22  # Highest priority
         
     # - Capture potential
     if landing_pit < 6 and player_pits[landing_pit] == 0:
@@ -76,6 +76,7 @@ def heuristic_move_value(board, move, maximizing_for):
         value += 1.2
 
     return -value  # Negative for descending sort
+
 def advanced_heuristic_minimax(board, depth, alpha, beta, current_player, maximizing_for):
     if depth == 0 or is_terminal(board):
         return evaluate(board, maximizing_for), None  # Evaluate from maximizing_for's perspective

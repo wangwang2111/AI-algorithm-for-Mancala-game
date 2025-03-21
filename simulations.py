@@ -165,7 +165,7 @@ def run_comprehensive_simulations(num_games=10):
     return results
 
 if __name__ == "__main__":
-    simulation_results = run_comprehensive_simulations(num_games=1000)
+    simulation_results = run_comprehensive_simulations(num_games=500)
     df = pd.DataFrame(simulation_results)
     df.to_csv("mancala_simulation_results_300.csv", index=False)
     
