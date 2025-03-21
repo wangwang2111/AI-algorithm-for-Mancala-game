@@ -2,8 +2,8 @@ export class MancalaAI {
   constructor(options = {}) {
     // Default options
     this.settings = {
-      aiType: 'alpha_beta',  // 'minimax', 'alpha_beta', 'advanced', 'dqn'
-      depth: 7  ,
+      aiType: 'advanced',  // 'minimax', 'alpha_beta', 'advanced', 'dqn'
+      depth: 5  ,
       ...options
     };
   }

@@ -6,7 +6,9 @@ import numpy as np
 import tensorflow as tf
 from tensorflow.keras.models import load_model
 
-from ai import minimax, alpha_beta, advanced_heuristic
+from ai.alpha_beta import minimax_alpha_beta
+from ai.minimax import simple_minimax
+from ai.advanced_heuristic import advanced_heuristic_minimax
 from ai.rules import get_valid_moves
 import random
 
@@ -58,37 +60,37 @@ def get_ai_move():
     data = request.json
     js_board = data['board']
     ai_type = data.get('ai', 'alpha_beta')  # Options: minimax, alpha_beta, advanced, dqn
-    depth = data.get('depth', 7)
+    depth = data.get('depth', 6)
     
     python_board = js_to_python_board(js_board)
     
     best_move = None
     
     if ai_type == 'minimax':
-        _, best_move = minimax(
-            board=python_board,
-            depth=depth,
-            maximizing_player=True,
-            original_player=True
-        )
+        _, best_move = simple_minimax(
+        board=python_board,
+        depth=depth,
+        current_player='player_2',
+        maximizing_for='player_2',
+    )
     elif ai_type == 'alpha_beta':
-        _, best_move = alpha_beta(
-            board=python_board,
-            depth=depth,
-            alpha=-math.inf,
-            beta=math.inf,
-            maximizing_player=True,
-            original_player=True
-        )
+        _, best_move = minimax_alpha_beta(
+        board=python_board,
+        depth=depth,
+        alpha=-math.inf,
+        beta=math.inf,
+        current_player='player_2',
+        maximizing_for='player_2',
+    )
     elif ai_type == 'advanced':
-        _, best_move = advanced_heuristic(
-            board=python_board,
-            depth=depth,
-            alpha=-math.inf,
-            beta=math.inf,
-            maximizing_player=True,
-            original_player=True
-        )
+        _, best_move = advanced_heuristic_minimax(
+        board=python_board,
+        depth=depth,
+        alpha=-math.inf,
+        beta=math.inf,
+        current_player='player_2',
+        maximizing_for='player_2',
+    )
     elif ai_type == 'dqn':
         best_move = dqn_get_move(python_board, dqn_model)
     else:

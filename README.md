@@ -1,6 +1,9 @@
 # AI algorithms for the Mancala game
 
-The AI algorithm is developed inside the ai folder, the simulations are run through simulations.py
+The AI algorithm is developed inside the ai folder, the simulations are run through 
+``` {bash}
+python simulations.py
+```
 
 Run the server by: python server.py
 

@@ -10,32 +10,41 @@ def is_terminal(board):
     return sum(board["player_1"][:6]) == 0 or sum(board["player_2"][:6]) == 0
 
 def evaluate(board, current_player):
-    """Evaluate board state from perspective of current_player"""
+    """Evaluate board state from the perspective of `current_player`."""
     opponent = "player_2" if current_player == "player_1" else "player_1"
     
     my_store = board[current_player][6]
     opponent_store = board[opponent][6]
 
-    if my_store > 24: return 1000
-    if opponent_store > 24: return -1000
+    # Terminal state checks (win/loss conditions)
+    if my_store > 24:
+        return 1000  # Guaranteed win
+    if opponent_store > 24:
+        return -1000  # Guaranteed loss
 
     store_diff = my_store - opponent_store
     pit_diff = sum(board[current_player][:6]) - sum(board[opponent][:6])
     
-    # Capture potential calculation
-    potential_captures = sum(1 for i in range(6) if 
-        board[current_player][i] == 0 and board[opponent][5-i] > 0)
+    # Capture potential: Sum of stones in opponent's pits opposite to our empty pits
+    capture_potential = sum(
+        board[opponent][5 - i]  # Stones in opponent's opposite pit
+        for i in range(6)
+        if board[current_player][i] == 0  # Only if our pit is empty
+    )
     
-    # Extra turn potential calculation
-    extra_turn_potential = sum(1 for i in range(6) if 
-        (board[current_player][i] == (6 - i)))
+    # Extra turn potential: Pits that can land in the store
+    extra_turn_potential = sum(
+        1 for i in range(6)
+        if board[current_player][i] == (6 - i)  # Stones needed to reach the store
+    )
 
+    # Adjusted weights for balanced evaluation
     return (
-        store_diff * 4 +
-        pit_diff * 0.5 +
-        potential_captures * 1.5 +
-        extra_turn_potential * 4 -
-        sum(board[opponent][:6]) * 0.2
+        store_diff * 5 +               # Prioritize store difference
+        pit_diff * 0.7 +                # Favor controlling more pits
+        capture_potential * 1 +       # Reward capture opportunities
+        extra_turn_potential * 2 -      # Value extra turns moderately
+        sum(board[opponent][:6]) * 0.3  # Penalize opponent's pit control
     )
 
 def get_valid_moves(board, player):
@@ -45,31 +54,48 @@ def make_move(board, player, pit):
     new_board = copy.deepcopy(board)
     seeds = new_board[player][pit]
     new_board[player][pit] = 0
-    index = pit
-    player_turn = player
+
+    original_player = player
+    current_player = player
+    index = pit  # Start at the selected pit
+
+    # Track last pit for capturing
+    last_pit = None
 
     while seeds > 0:
         index += 1
-        if index == 7:
-            if player_turn == "player_1":
-                player_turn = "player_2"
-                index = 0
-            else:
-                index = 0
-        new_board[player_turn][index] += 1
-        seeds -= 1
 
-    if index < 6 and new_board[player_turn][index] == 1:
-        opposite_index = 5 - index
-        if player_turn == "player_1":
-            captured = new_board["player_2"][opposite_index]
-            new_board["player_2"][opposite_index] = 0
-            new_board["player_1"][6] += captured + 1
-            new_board["player_1"][index] = 0
+        # Handle wrap-around and store logic
+        if current_player == original_player:
+            # On original player's side: include their store (index 6)
+            if index > 6:  # After store (index 6), switch to opponent's side
+                current_player = "player_2" if current_player == "player_1" else "player_1"
+                index = 0
         else:
-            captured = new_board["player_1"][opposite_index]
-            new_board["player_1"][opposite_index] = 0
-            new_board["player_2"][6] += captured + 1
-            new_board["player_2"][index] = 0
+            # On opponent's side: skip their store (only indices 0-5)
+            if index >= 6:  # After pit 5, switch back to original player
+                current_player = original_player
+                index = 0
 
-    return new_board, index == 6
+        # Add seed to the current pit/store
+        new_board[current_player][index] += 1
+        seeds -= 1
+        last_pit = (current_player, index)
+
+    # Check for capture (only on original player's side)
+    if (
+        last_pit[0] == original_player  # Last seed on original player's side
+        and last_pit[1] < 6  # Landed in a pit (not the store)
+        and new_board[original_player][last_pit[1]] == 1  # Pit was empty
+    ):
+        opposite_player = "player_2" if original_player == "player_1" else "player_1"
+        opposite_pit = 5 - last_pit[1]
+        captured = new_board[opposite_player][opposite_pit]
+        new_board[original_player][6] += captured + 1  # Capture + last seed
+        new_board[opposite_player][opposite_pit] = 0
+        new_board[original_player][last_pit[1]] = 0
+
+    # Check for extra turn (last seed in store)
+    extra_turn = last_pit[0] == original_player and last_pit[1] == 6
+
+    return new_board, extra_turn

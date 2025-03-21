@@ -1,46 +1,81 @@
 from ai.rules import is_terminal, evaluate, get_valid_moves, make_move
 import math
 
-def heuristic_move_value(board, move, player):
-    """
-    Assigns a heuristic score to a move for sorting and prioritization in the minimax search.
-    Factors:
-    - Extra turn potential (landing in store)
-    - Capture potential
-    - Pit difference advantage
-    """
-    player_pits = board[player]
-    opponent = "player_1" if player == "player_2" else "player_2"
+def heuristic_move_value(board, move, maximizing_for):
+    player_pits = board[maximizing_for]
+    opponent = "player_1" if maximizing_for == "player_2" else "player_2"
     opponent_pits = board[opponent]
-
     stones = player_pits[move]
-    landing_pit = (move + stones) % 7
     value = 0
 
-    # Prioritize extra turns
-    if landing_pit == 6:
-        value += 8
-
-    # Prioritize captures
+    # 1. Basic Movement Analysis
+    landing_pit = (move + stones) % 14  # Simplified circular board assumption
+    
+    # 2. Immediate Rewards
+    # - Extra turns
+    if landing_pit == 6:  # Landing in own store
+        value += 15  # Highest priority
+        
+    # - Capture potential
     if landing_pit < 6 and player_pits[landing_pit] == 0:
-        opposite_pit = 5 - landing_pit
-        captured_stones = board[opponent][opposite_pit]
-        if captured_stones > 0:
-            value += captured_stones * 0.5
+        captured = opponent_pits[5 - landing_pit]
+        value += captured * 2  # Value actual captured stones
 
-    # Pit difference: Favor moves that leave us with more stones on our side
-    pit_diff_after_move = (
-        sum(player_pits[:6]) - player_pits[move]  # subtract stones being moved
-        + (1 if landing_pit != 6 else 0)  # +1 if we land somewhere that isn't store
-        + stones  # redistribute stones
-    ) - sum(opponent_pits[:6])
+    # 3. Positional Advantage
+    # - Central pit control (pits 2,3,4 are more valuable)
+    position_weights = [0.5, 0.8, 1.2, 1.5, 1.2, 0.8]
+    value += position_weights[move] * 2
 
-    # Weigh the pit difference
-    value += pit_diff_after_move * 0.2  
+    # 4. Future Game State
+    # - Seeds that will end up in dangerous positions for opponent
+    danger_zones = [0, 1, 5]  # Pits vulnerable to capture
+    for i in range(stones):
+        pit = (move + i + 1) % 14
+        if pit in danger_zones and pit < 6:
+            value += 0.3
 
-    return -value  # Negative so higher values come first when sorting (maximize benefit)
+    # 5. Defensive Considerations
+    # - Block opponent's potential captures
+    for opp_move in range(6):
+        if opponent_pits[opp_move] == (13 - opp_move):  # Stones needed to reach our pit
+            value += 1.5
 
+    # 6. Progressive Game Phase
+    total_seeds = sum(player_pits) + sum(opponent_pits)
+    game_phase = 1 - (total_seeds / 96)  # 0=start, 1=endgame
+    
+    # - Endgame: Maximize store difference
+    value += (player_pits[6] - opponent_pits[6]) * game_phase * 2
+    
+    # - Early game: Control pit advantage
+    value += (sum(player_pits[:6]) - sum(opponent_pits[:6])) * (1 - game_phase) * 1.5
 
+    # 7. Mobility
+    # - Number of valid moves next turn
+    future_moves = 0
+    for i in range(6):
+        if player_pits[i] > (6 - i):  # Can reach store
+            future_moves += 1
+    value += future_moves * 0.8
+
+    # 8. Denial Strategy
+    # - Prevent opponent from getting extra turns
+    for i in range(6):
+        if opponent_pits[i] == (13 - i):  # Stones needed for extra turn
+            value -= 2  # Penalize moves that allow this
+
+    # 9. Seed Conservation
+    # - Avoid emptying pits unless beneficial
+    if player_pits[move] == stones:  # This move empties the pit
+        if landing_pit != 6:  # Only penalize if not scoring
+            value -= 2
+
+    # 10. Tempo Control
+    # - Moves that force opponent into bad positions
+    if stones > 10:  # Large seed groups create complex distributions
+        value += 1.2
+
+    return -value  # Negative for descending sort
 def advanced_heuristic_minimax(board, depth, alpha, beta, current_player, maximizing_for):
     if depth == 0 or is_terminal(board):
         return evaluate(board, maximizing_for), None  # Evaluate from maximizing_for's perspective
@@ -49,11 +84,11 @@ def advanced_heuristic_minimax(board, depth, alpha, beta, current_player, maximi
     if not valid_moves:
         return evaluate(board, maximizing_for), None
 
-    # Sorting moves based on heuristic for current_player
+    # Sort moves based on maximizing_for's perspective
     sorted_moves = sorted(
         valid_moves,
-        key=lambda m: heuristic_move_value(board, m, current_player),
-        reverse=True  # We want higher heuristic values first
+        key=lambda m: heuristic_move_value(board, m, maximizing_for),  # Use maximizing_for
+        reverse=True
     )
 
     best_move = sorted_moves[0]
