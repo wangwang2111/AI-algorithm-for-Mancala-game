@@ -1,107 +1,173 @@
 <!DOCTYPE html>
 <html lang="en">
+
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Mancala AI</title>
     <link rel="stylesheet" href="public/main.css">
+    <style>
+        /* Additional Enhancements */
+        .button {
+            padding: 10px 20px;
+            font-size: 16px;
+            border: none;
+            border-radius: 10px;
+            cursor: pointer;
+            transition: background 0.3s;
+        }
+        
+        .button-primary {
+            background: #3498db;
+            color: white;
+        }
+        
+        .button-primary:hover {
+            background: #2980b9;
+        }
+        
+        .button-secondary {
+            background: #2ecc71;
+            color: white;
+        }
+        
+        .button-secondary:hover {
+            background: #27ae60;
+        }
+        
+        .game-container {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+        }
+
+        .ai-controls {
+            display: flex;
+            gap: 15px;
+            align-items: center;
+            justify-content: center;
+            background: white;
+            padding: 10px;
+            border-radius: 10px;
+        }
+    </style>
 </head>
+
 <body>
     <h1>Mancala AI</h1>
     <div class="ai-controls">
         <label for="ai-algorithm">AI Algorithm:</label>
-        <select id="ai-algorithm">
+        <select id="ai-algorithm" class="button">
             <option value="advanced">Advanced Heuristic</option>
             <option value="alpha_beta">Alpha-Beta Pruning</option>
             <option value="minimax">Minimax</option>
+            <option value="MCTS">MCTS</option>
             <option value="dqn">Neural Network (DQN)</option>
         </select>
-    
+
         <div id="depth-control" class="hidden">
             <label for="ai-depth">Search Depth:</label>
-            <input type="number" id="ai-depth" min="1" max="10" value="5">
+            <input type="number" id="ai-depth" min="1" max="10" value="7" class="button">
         </div>
     </div>
-    <div class="board-container">
-        <div class="board">
-            <!-- Player 2 Store -->
-            <div class="store-container">
-                <div class="store" id="store2"></div>
-                <span class="store-count">0</span>
+
+    <div class="game-container">
+        <div class="game-header">
+            <div class="status-container">
+                <div id="status1" class="status player1-status">Player 1</div>
+                <div class="game-controls">
+                    <button id="restart-button" class="button button-primary">New Game (Switch Player)</button>
+                    <button id="undo-button" class="button button-secondary">Undo Move</button>
+                    <button id="hint-button" class="button button-secondary">Get Hint</button>
+                </div>
+                <div id="status2" class="status player2-status">Player 2</div>
             </div>
-    
-            <div class="pits-container">
-                <!-- Player 2 pits (indices 7-12) -->
-                <div class="pits-row player2">
-                    <div class="pit-container">
-                        <span class="pit-number">7</span>
-                        <div class="pit" data-index="7"></div>
+        </div>
+        
+        <div class="board-container">
+            <div class="board">
+                <div class="store-container">
+                    <div class="store" id="store2" data-index="13"></div>
+                    <span class="store-count">0</span>
+                </div>
+                <div class="pits-container">
+                    <!-- Player 2 pits (indices 7-12) -->
+                    <div class="pits-row player2">
+                        <div class="pit-container">
+                            <span class="pit-number">7</span>
+                            <div class="pit" data-index="7"></div>
+                        </div>
+                        <div class="pit-container">
+                            <span class="pit-number">8</span>
+                            <div class="pit" data-index="8"></div>
+                        </div>
+                        <div class="pit-container">
+                            <span class="pit-number">9</span>
+                            <div class="pit" data-index="9"></div>
+                        </div>
+                        <div class="pit-container">
+                            <span class="pit-number">10</span>
+                            <div class="pit" data-index="10"></div>
+                        </div>
+                        <div class="pit-container">
+                            <span class="pit-number">11</span>
+                            <div class="pit" data-index="11"></div>
+                        </div>
+                        <div class="pit-container">
+                            <span class="pit-number">12</span>
+                            <div class="pit" data-index="12"></div>
+                        </div>
                     </div>
-                    <div class="pit-container">
-                        <span class="pit-number">8</span>
-                        <div class="pit" data-index="8"></div>
-                    </div>
-                    <div class="pit-container">
-                        <span class="pit-number">9</span>
-                        <div class="pit" data-index="9"></div>
-                    </div>
-                    <div class="pit-container">
-                        <span class="pit-number">10</span>
-                        <div class="pit" data-index="10"></div>
-                    </div>
-                    <div class="pit-container">
-                        <span class="pit-number">11</span>
-                        <div class="pit" data-index="11"></div>
-                    </div>
-                    <div class="pit-container">
-                        <span class="pit-number">12</span>
-                        <div class="pit" data-index="12"></div>
+
+                    <!-- Player 1 pits (indices 0-5) -->
+                    <div class="pits-row player1">
+                        <div class="pit-container">
+                            <div class="pit" data-index="0"></div>
+                            <span class="pit-number">0</span>
+                        </div>
+                        <div class="pit-container">
+                            <div class="pit" data-index="1"></div>
+                            <span class="pit-number">1</span>
+                        </div>
+                        <div class="pit-container">
+                            <div class="pit" data-index="2"></div>
+                            <span class="pit-number">2</span>
+                        </div>
+                        <div class="pit-container">
+                            <div class="pit" data-index="3"></div>
+                            <span class="pit-number">3</span>
+                        </div>
+                        <div class="pit-container">
+                            <div class="pit" data-index="4"></div>
+                            <span class="pit-number">4</span>
+                        </div>
+                        <div class="pit-container">
+                            <div class="pit" data-index="5"></div>
+                            <span class="pit-number">5</span>
+                        </div>
                     </div>
                 </div>
-    
-                <!-- Player 1 pits (indices 0-5) -->
-                <div class="pits-row player1">
-                    <div class="pit-container">
-                        <div class="pit" data-index="0"></div>
-                        <span class="pit-number">0</span>
-                    </div>
-                    <div class="pit-container">
-                        <div class="pit" data-index="1"></div>
-                        <span class="pit-number">1</span>
-                    </div>
-                    <div class="pit-container">
-                        <div class="pit" data-index="2"></div>
-                        <span class="pit-number">2</span>
-                    </div>
-                    <div class="pit-container">
-                        <div class="pit" data-index="3"></div>
-                        <span class="pit-number">3</span>
-                    </div>
-                    <div class="pit-container">
-                        <div class="pit" data-index="4"></div>
-                        <span class="pit-number">4</span>
-                    </div>
-                    <div class="pit-container">
-                        <div class="pit" data-index="5"></div>
-                        <span class="pit-number">5</span>
-                    </div>
+
+                <div class="store-container">
+                    <div class="store" id="store1" data-index="6"></div>
+                    <span class="store-count">0</span>
                 </div>
-            </div>
-    
-            <!-- Player 1 Store -->
-            <div class="store-container">
-                <div class="store" id="store1"></div>
-                <span class="store-count">0</span>
             </div>
         </div>
     </div>
+
     <div id="loading-spinner" class="hidden">
         <div class="spinner"></div>
+        <div class="loading-text">AI Thinking...</div>
     </div>
-    <div class="status" id="status">Player 1's Turn</div>
+    
+    <button id="mute-button" class="button">🔊</button>
+    <button id="settings-button" class="button">⚙️ Settings</button>
 
     <audio id="stone-sound" src="public/stone-sound.mp3"></audio>
     <audio id="game-over-sound" src="public/game-over-sound.mp3"></audio>
+    <audio id="restart-sound" src="public/restart-sound.mp3"></audio>
+    <audio id="background-sound" src="public/background-sound.mp3"></audio>
     <script type="module" src="components/game.js"></script>
     <script type="module" src="components/ai.js"></script>
     <script type="module" src="ui.js"></script>

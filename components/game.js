@@ -6,35 +6,37 @@ export class MancalaGame {
     this.board[13] = 0; // Player 2 store
     this.currentPlayer = 0;
     this.gameActive = true;
-}
+
+    console.log(`Initial board state:`, this.board); // Debugging
+  }
 
   makeMove(pitIndex) {
     if (!this.validateMove(pitIndex)) return false;
+
+    console.log(`Board before move:`, this.board); // Debugging
 
     let stones = this.board[pitIndex];
     this.board[pitIndex] = 0;
     let currentIndex = pitIndex;
 
     while (stones > 0) {
-      currentIndex = (currentIndex + 1) % 14;
+        currentIndex = (currentIndex + 1) % 14;
 
-      // Skip opponent's store
-      if ((this.currentPlayer === 0 && currentIndex === 13) || 
-          (this.currentPlayer === 1 && currentIndex === 6)) {
-        continue;
-      }
+        // Skip opponent's store
+        if ((this.currentPlayer === 0 && currentIndex === 13) || 
+            (this.currentPlayer === 1 && currentIndex === 6)) {
+            currentIndex = (currentIndex + 1) % 14;
+        }
 
-      this.board[currentIndex]++;
-      stones--;
+        this.board[currentIndex]++;
+        stones--;
     }
 
-    // Capture logic
+    console.log(`Board after move:`, this.board); // Debugging
     this.handleCapture(currentIndex);
-
-    // Check extra turn
     const extraTurn = this.checkExtraTurn(currentIndex);
     if (!extraTurn) {
-      this.currentPlayer = 1 - this.currentPlayer;
+        this.currentPlayer = 1 - this.currentPlayer;
     }
 
     this.checkGameEnd();

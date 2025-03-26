@@ -8,6 +8,7 @@ from tensorflow.keras.models import load_model
 
 from ai.alpha_beta import minimax_alpha_beta
 from ai.minimax import simple_minimax
+from ai.MCTS import mcts_decide
 from ai.advanced_heuristic import advanced_heuristic_minimax
 from ai.rules import get_valid_moves
 import random
@@ -17,7 +18,7 @@ app = Flask(__name__)
 CORS(app)
 
 # Load DQN model (once at startup)
-dqn_model = load_model('models/mancala_dqn.h5', compile=False)
+dqn_model = load_model('mancala_dqn.h5', compile=False)
 
 # Your existing AI code
 def js_to_python_board(js_board):
@@ -30,38 +31,80 @@ def python_to_js_board(python_board):
     return python_board["player_1"] + python_board["player_2"]
 
 def dqn_get_move(board, model, player="player_2"):
-    """Get best move using trained DQN model with validation"""
-    state = np.array(
-        board["player_1"][:6] + 
-        [board["player_1"][6]] + 
-        board["player_2"][:6] + 
-        [board["player_2"][6]]
-    )
-    
-    processed_state = (np.array(state, dtype=np.float32).reshape(1, -1) / 4.0)
-    assert processed_state.shape == (1, 14), "Invalid state shape"
-    
-    valid_moves = get_valid_moves(board, player)
-    if not valid_moves:
-        return None
+    """Get best move using trained DQN model with proper serialization"""
+    try:
+        # Convert board to numpy array and normalize
+        state = np.array(
+            board["player_1"][:6] + 
+            [board["player_1"][6]] + 
+            board["player_2"][:6] + 
+            [board["player_2"][6]],
+            dtype=np.float32
+        ) / 4.0
+        
+        processed_state = state.reshape(1, -1)
+        
+        if processed_state.shape != (1, 14):
+            raise ValueError(f"Invalid state shape: {processed_state.shape}")
 
-    q_values = model.predict(processed_state, verbose=0)[0]
-    masked_q = [-np.inf if i not in valid_moves else q_values[i] for i in range(6)]
+        # Get valid moves
+        valid_moves = get_valid_moves(board, player)
+        if not valid_moves:
+            return None
+
+        # Get Q-values
+        q_values = model.predict(processed_state, verbose=0)[0]
+        
+        # Mask invalid moves
+        masked_q = [-np.inf if i not in valid_moves else q_values[i] for i in range(6)]
+        
+        # Select best move and convert to native Python int
+        best_move = int(np.argmax(masked_q))  # Convert numpy.int64 to Python int
+        
+        return best_move if best_move in valid_moves else (
+            random.choice(valid_moves) if valid_moves else None
+        )
+        
+    except Exception as e:
+        print(f"Error in dqn_get_move: {e}")
+        return None
+        
     
-    best_move = np.argmax(masked_q)
+# def dqn_get_move(board, model, player="player_2"):
+#     """Get best move using trained DQN model with validation"""
+#     state = np.array(
+#         board["player_1"][:6] + 
+#         [board["player_1"][6]] + 
+#         board["player_2"][:6] + 
+#         [board["player_2"][6]]
+#     )
     
-    # Fallback to random valid move if needed
-    return best_move if best_move in valid_moves else (
-        random.choice(valid_moves) if valid_moves else None
-    )
+#     processed_state = (np.array(state, dtype=np.float32).reshape(1, -1) / 4.0)
+#     assert processed_state.shape == (1, 14), "Invalid state shape"
+    
+#     valid_moves = get_valid_moves(board, player)
+#     if not valid_moves:
+#         return None
+
+#     q_values = model.predict(processed_state, verbose=0)[0]
+#     masked_q = [-np.inf if i not in valid_moves else q_values[i] for i in range(6)]
+    
+#     best_move = np.argmax(masked_q)
+    
+#     # Fallback to random valid move if needed
+#     return best_move if best_move in valid_moves else (
+#         random.choice(valid_moves) if valid_moves else None
+#     )
 
 @app.route('/ai-move', methods=['POST'])
 def get_ai_move():
     data = request.json
     js_board = data['board']
-    ai_type = data.get('ai', 'alpha_beta')  # Options: minimax, alpha_beta, advanced, dqn
-    depth = data.get('depth', 6)
+    ai_type = data.get('ai', 'advanced')  # Options: minimax, alpha_beta, advanced, dqn
+    depth = data.get('depth', 7)
+    currentPlayer = data.get('currentPlayer', 'player_1')
     
+    print("currentPlayer is", currentPlayer)
     python_board = js_to_python_board(js_board)
     
     best_move = None
@@ -70,8 +113,8 @@ def get_ai_move():
         _, best_move = simple_minimax(
         board=python_board,
         depth=depth,
-        current_player='player_2',
-        maximizing_for='player_2',
+        current_player=currentPlayer,
+        maximizing_for=currentPlayer,
     )
     elif ai_type == 'alpha_beta':
         _, best_move = minimax_alpha_beta(
@@ -79,8 +122,8 @@ def get_ai_move():
         depth=depth,
         alpha=-math.inf,
         beta=math.inf,
-        current_player='player_2',
-        maximizing_for='player_2',
+        current_player=currentPlayer,
+        maximizing_for=currentPlayer,
     )
     elif ai_type == 'advanced':
         _, best_move = advanced_heuristic_minimax(
@@ -88,19 +131,27 @@ def get_ai_move():
         depth=depth,
         alpha=-math.inf,
         beta=math.inf,
-        current_player='player_2',
-        maximizing_for='player_2',
+        current_player=currentPlayer,
+        maximizing_for=currentPlayer,
     )
     elif ai_type == 'dqn':
         best_move = dqn_get_move(python_board, dqn_model)
+    elif ai_type == 'MCTS':
+        best_move = mcts_decide(python_board, player=currentPlayer, simulations=1000, time_limit=5)
     else:
         return jsonify({'error': 'Invalid AI type selected.'}), 400
     
-    # Convert Python move (0-5) to JS format (7-12) if necessary
-    js_move = best_move + 7 if best_move is not None else None
+    print("the best move found is:", best_move)
+    if best_move is not None:
+        if currentPlayer == 'player_1':
+            js_move = best_move  # Player 1 moves are 0-5
+        else:
+            js_move = best_move + 7  # Player 2 moves are 7-12
+    else:
+        js_move = random.choice()
     
     return jsonify({"move": js_move})
 
 
 if __name__ == '__main__':
-    app.run(port=5000)
+    app.run(port=5000, debug=True)

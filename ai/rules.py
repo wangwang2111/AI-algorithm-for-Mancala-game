@@ -10,42 +10,83 @@ def is_terminal(board):
     return sum(board["player_1"][:6]) == 0 or sum(board["player_2"][:6]) == 0
 
 def evaluate(board, current_player):
-    """Evaluate board state from the perspective of `current_player`."""
+    """Evaluate board state from the perspective of `current_player` using all 10 heuristics."""
     opponent = "player_2" if current_player == "player_1" else "player_1"
     
     my_store = board[current_player][6]
     opponent_store = board[opponent][6]
+    my_pits = board[current_player][:6]
+    opponent_pits = board[opponent][:6]
 
-    # Terminal state checks (win/loss conditions)
-    if my_store > 24:
-        return 1000  # Guaranteed win
-    if opponent_store > 24:
-        return -1000  # Guaranteed loss
+    # Heuristic 1: Score difference (store difference)
+    score_diff = my_store - opponent_store
 
-    store_diff = my_store - opponent_store
-    pit_diff = sum(board[current_player][:6]) - sum(board[opponent][:6])
-    
-    # Capture potential: Sum of stones in opponent's pits opposite to our empty pits
-    capture_potential = sum(
-        board[opponent][5 - i]  # Stones in opponent's opposite pit
-        for i in range(6)
-        if board[current_player][i] == 0  # Only if our pit is empty
+    # Heuristic 2: Stones captured (recent captures)
+    # Note: In evaluation function, we need to calculate potential captures instead
+    captured_stones = sum(
+        opponent_pits[5 - i] 
+        for i in range(6) 
+        if my_pits[i] == 0 and opponent_pits[5 - i] > 0
     )
-    
-    # Extra turn potential: Pits that can land in the store
+
+    # Heuristic 3: Extra turns potential
     extra_turn_potential = sum(
         1 for i in range(6)
-        if board[current_player][i] == (6 - i)  # Stones needed to reach the store
+        if my_pits[i] == (6 - i)  # Stones needed to land in store
     )
 
-    # Adjusted weights for balanced evaluation
-    return (
-        store_diff * 5 +               # Prioritize store difference
-        pit_diff * 0.7 +                # Favor controlling more pits
-        capture_potential * 1 +       # Reward capture opportunities
-        extra_turn_potential * 2 -      # Value extra turns moderately
-        sum(board[opponent][:6]) * 0.3  # Penalize opponent's pit control
+    # Heuristic 4: Empty pits (penalize)
+    empty_pits = sum(1 for pit in my_pits if pit == 0)
+
+    # Heuristic 5: Opponent's empty pits (reward)
+    opponent_empty_pits = sum(1 for pit in opponent_pits if pit == 0)
+
+    # Heuristic 6: Stones in store
+    store_value = my_store
+
+    # Heuristic 7: Stones in opponent's store (penalize)
+    opponent_store_value = opponent_store
+
+    # Heuristic 8: Potential captures
+    potential_captures = captured_stones  # Same as heuristic 2 in this context
+
+    # Heuristic 9: Balance of stones
+    if len(my_pits) > 0:
+        mean_pits = sum(my_pits) / len(my_pits)
+        stone_imbalance = (sum((x - mean_pits) ** 2 for x in my_pits) / len(my_pits)) ** 0.5
+    else:
+        stone_imbalance = 0
+
+    # Heuristic 10: Endgame advantage
+    endgame_score = 0
+    if is_terminal(board):
+        if my_store > 24:
+            endgame_score = 1000  # Win
+        elif opponent_store > 24:
+            endgame_score = -1000  # Lose
+        else:
+            endgame_score = 500 if score_diff > 0 else -500  # Draw with advantage
+
+    # If terminal state, return immediately with endgame score
+    if is_terminal(board):
+        return endgame_score
+
+    # Combine all heuristics with adjusted weights for evaluation
+    evaluation = (
+        score_diff * 5.0 +                   # Primary score difference
+        captured_stones * 2.5 +              # Capture potential
+        extra_turn_potential * 3.0 +         # Extra turn potential
+        empty_pits * -0.5 +                  # Penalize empty pits
+        opponent_empty_pits * 0.5 +          # Reward opponent's empty pits
+        store_value * 0.3 +                 # Direct store value
+        opponent_store_value * -0.3 +        # Penalize opponent's store
+        potential_captures * 1.5 +           # Potential captures
+        stone_imbalance * -0.2 +             # Penalize imbalance
+        sum(my_pits) * 0.1 -                 # Reward stones in pits
+        sum(opponent_pits) * 0.1             # Penalize opponent's stones
     )
+
+    return evaluation
 
 def get_valid_moves(board, player):
     return [i for i in range(6) if board[player][i] > 0]

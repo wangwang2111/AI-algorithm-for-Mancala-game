@@ -1,9 +1,11 @@
+// ai.js
 export class MancalaAI {
   constructor(options = {}) {
     // Default options
     this.settings = {
       aiType: 'advanced',  // 'minimax', 'alpha_beta', 'advanced', 'dqn'
-      depth: 5  ,
+      depth: 5,
+      currentPlayer: 'player_2',
       ...options
     };
   }
@@ -12,8 +14,12 @@ export class MancalaAI {
     try {
       const payload = {
         board: game.board,
-        ai: this.settings.aiType
+        ai: this.settings.aiType,
+        currentPlayer: game.currentPlayer === 0 ? 'player_1' : 'player_2' // Fixed translation
       };
+      // In ai.js getMove()
+      console.log("Frontend currentPlayer:", game.currentPlayer);
+      console.log("Sending to backend as:", payload.currentPlayer);
 
       // Only send depth for tree-based algorithms
       if (this.settings.aiType !== 'dqn') {
@@ -41,7 +47,6 @@ export class MancalaAI {
       return data.move;
     } catch (error) {
       console.error('AI Error:', error);
-      // Fallback to random valid move
       const validMoves = this.getValidMoves(game);
       return validMoves.length > 0 
         ? validMoves[Math.floor(Math.random() * validMoves.length)]
@@ -50,7 +55,6 @@ export class MancalaAI {
   }
 
   getValidMoves(game) {
-    // Assuming game.board follows standard 14-element format
     return game.currentPlayer === 0
       ? game.board.slice(0, 6).map((v, i) => v > 0 ? i : -1).filter(i => i >= 0)
       : game.board.slice(7, 13).map((v, i) => v > 0 ? i + 7 : -1).filter(i => i >= 0);

@@ -15,7 +15,7 @@ def heuristic_move_value(board, move, maximizing_for):
     # - Extra turns
     if landing_pit == 6:  # Landing in own store
         value += 22  # Highest priority
-        
+       
     # - Capture potential
     if landing_pit < 6 and player_pits[landing_pit] == 0:
         captured = opponent_pits[5 - landing_pit]

@@ -1,16 +1,21 @@
 import math
 import random
 import time
-from itertools import product, combinations_with_replacement
+from itertools import product, permutations
 import pandas as pd
+import numpy as np
 
 from ai.rules import initialize_board, is_terminal, evaluate, get_valid_moves, make_move
 from ai.alpha_beta import minimax_alpha_beta
 from ai.minimax import simple_minimax
 from ai.advanced_heuristic import advanced_heuristic_minimax
+from ai.MCTS import mcts_decide
 from concurrent.futures import ProcessPoolExecutor
-import pandas as pd
-from itertools import product
+from ai.dqn import DQNAgent
+
+# Load DQN model
+agent = DQNAgent()
+agent.model.load_weights("mancala_dqn.h5")
 
 def random_strategy(board, player):
     return random.choice(get_valid_moves(board, player))
@@ -42,24 +47,22 @@ def advanced_heuristic_strategy(board, player):
         current_player=player,
         maximizing_for=player,
     )[1]
+
+def mcts_strategy(board, player):
+        return mcts_decide(board, player)
+    
+def dqn_strategy(board, player):
+    state = np.array(board["player_1"][:6] + [board["player_1"][6]] + board["player_2"][:6] + [board["player_2"][6]])
+    valid_moves = get_valid_moves(board, player)
+    return agent.get_action(state, valid_moves)
     
 strategies = [
-    {
-        "name": "Random",
-        "function": random_strategy
-    },
-    {
-        "name": "Simple Minimax",
-        "function": simple_minimax_strategy
-    },
-    {
-        "name": "Minimax Alpha-Beta",
-        "function": minimax_alpha_beta_strategy
-    },
-    {
-        "name": "Advanced Heuristic",
-        "function": advanced_heuristic_strategy
-    }
+    {"name": "Random", "function": random_strategy},
+    {"name": "Simple Minimax", "function": simple_minimax_strategy},
+    {"name": "Minimax Alpha-Beta", "function": minimax_alpha_beta_strategy},
+    {"name": "Advanced Heuristic", "function": advanced_heuristic_strategy},
+    # {"name": "MCTS", "function": mcts_strategy},
+    {"name": "DQN", "function": dqn_strategy},
 ]
 
 def simulate_game(player1_strategy, player2_strategy):
@@ -67,7 +70,7 @@ def simulate_game(player1_strategy, player2_strategy):
     start_time = time.time()
     board = initialize_board()
     # Randomly select which player starts the game
-    current_player = random.choice(["player_1", "player_2"])
+    current_player = "player_1"
     moves_count = 0
     
     while not is_terminal(board):
@@ -145,9 +148,39 @@ def run_simulations_for_pair(pair, num_games):
         })
     return results
 
-def run_comprehensive_simulations(num_games=10):
+# def run_comprehensive_simulations(num_games=10):
+#     results = []
+#     combinations = list(permutations(strategies, 2))
+#     total_combinations = len(combinations)
+    
+#     # Master progress bar for all strategy pairs
+#     with tqdm(total=total_combinations, desc="Overall Progress") as overall_progress:
+#         with ProcessPoolExecutor() as executor:
+#             futures = []
+#             for pair in combinations:
+#                 future = executor.submit(run_simulations_for_pair, pair, num_games)
+#                 future.add_done_callback(lambda _: overall_progress.update(1))
+#                 futures.append(future)
+            
+#             for future in futures:
+#                 results.extend(future.result())
+    
+#     return results
+
+def run_comprehensive_simulations(num_games=100):
+    """Run simulations where one player is always MCTS and the other is any other strategy."""
     results = []
-    combinations = list(combinations_with_replacement(strategies, 2))
+    
+    # Find the MCTS strategy
+    dqn_strategy = next(s for s in strategies if s["name"] == "DQN")
+    other_strategies = [s for s in strategies if s["name"] != "DQN"]
+    
+    # Create all combinations where one player is MCTS and the other is any other strategy
+    combinations = []
+    for strategy in other_strategies:
+        combinations.append((dqn_strategy, strategy))  # MCTS as player1
+        combinations.append((strategy, dqn_strategy))  # MCTS as player2
+    
     total_combinations = len(combinations)
     
     # Master progress bar for all strategy pairs
@@ -167,7 +200,7 @@ def run_comprehensive_simulations(num_games=10):
 if __name__ == "__main__":
     simulation_results = run_comprehensive_simulations(num_games=500)
     df = pd.DataFrame(simulation_results)
-    df.to_csv("mancala_simulation_results_300.csv", index=False)
+    df.to_csv("mancala_simulation_dqn.csv", index=False)
     
     print("\nSummary Statistics:")
     print(df.groupby(['Player1_Strategy', 'Player2_Strategy']).agg({
