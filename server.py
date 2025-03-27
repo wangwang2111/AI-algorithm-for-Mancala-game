@@ -18,7 +18,7 @@ app = Flask(__name__)
 CORS(app)
 
 # Load DQN model (once at startup)
-dqn_model = load_model('mancala_dqn.h5', compile=False)
+dqn_model = load_model('mancala_dqn_final.h5', compile=False)
 
 # Your existing AI code
 def js_to_python_board(js_board):
@@ -31,43 +31,95 @@ def python_to_js_board(python_board):
     return python_board["player_1"] + python_board["player_2"]
 
 def dqn_get_move(board, model, player="player_2"):
-    """Get best move using trained DQN model with proper serialization"""
+    """Get best move using trained DQN model with proper state preprocessing.
+    
+    Args:
+        board: Current game board state as a dictionary with 'player_1' and 'player_2' keys
+        model: Trained DQN model that expects input shape (2, 7, 2)
+        player: The player making the move ('player_1' or 'player_2')
+    
+    Returns:
+        int: Best move (0-5) according to the model, or random valid move if error occurs
+    """
     try:
-        # Convert board to numpy array and normalize
-        state = np.array(
-            board["player_1"][:6] + 
-            [board["player_1"][6]] + 
-            board["player_2"][:6] + 
-            [board["player_2"][6]],
-            dtype=np.float32
-        ) / 4.0
+        # Preprocess the state exactly like in the MancalaDQN class
+        state = np.zeros((2, 7, 2))
+        state[:, :, 0] = np.array([
+            board['player_1'][:6] + [board['player_1'][6]],  # Player 1 pits + store
+            board['player_2'][:6] + [board['player_2'][6]]   # Player 2 pits + store
+        ])
+        state[:, :, 1] = 1 if player == 'player_1' else -1  # Player indicator
         
-        processed_state = state.reshape(1, -1)
+        # Add batch dimension
+        state = state[np.newaxis, ...]
         
-        if processed_state.shape != (1, 14):
-            raise ValueError(f"Invalid state shape: {processed_state.shape}")
-
-        # Get valid moves
+        # Get valid moves (0-5 indices)
         valid_moves = get_valid_moves(board, player)
         if not valid_moves:
             return None
 
-        # Get Q-values
-        q_values = model.predict(processed_state, verbose=0)[0]
+        # Get Q-values from model
+        q_values = model.predict(state, verbose=0)[0]
         
-        # Mask invalid moves
-        masked_q = [-np.inf if i not in valid_moves else q_values[i] for i in range(6)]
+        # Mask invalid moves by setting their Q-values to -infinity
+        masked_q = np.full(6, -np.inf)  # Initialize all moves as invalid
+        for move in valid_moves:
+            masked_q[move] = q_values[move]  # Only keep valid moves
+            
+        # Select move with highest Q-value
+        best_move = np.argmax(masked_q)
         
-        # Select best move and convert to native Python int
-        best_move = int(np.argmax(masked_q))  # Convert numpy.int64 to Python int
-        
-        return best_move if best_move in valid_moves else (
-            random.choice(valid_moves) if valid_moves else None
-        )
-        
+        # Verify the move is valid (should always be true due to masking)
+        if best_move in valid_moves:
+            return int(best_move)  # Convert numpy.int64 to Python int
+        else:
+            # Fallback to random valid move if something went wrong
+            return random.choice(valid_moves) if valid_moves else None
+            
     except Exception as e:
-        print(f"Error in dqn_get_move: {e}")
-        return None
+        print(f"Error in dqn_get_move: {str(e)}")
+        # Fallback to random valid move if error occurs
+        valid_moves = get_valid_moves(board, player)
+        return random.choice(valid_moves) if valid_moves else None
+        
+# def dqn_get_move(board, model, player="player_2"):
+#     """Get best move using trained DQN model with proper serialization"""
+#     try:
+#         # Convert board to numpy array and normalize
+#         state = np.array(
+#             board["player_1"][:6] + 
+#             [board["player_1"][6]] + 
+#             board["player_2"][:6] + 
+#             [board["player_2"][6]],
+#             dtype=np.float32
+#         ) / 4.0
+        
+#         processed_state = state.reshape(1, -1)
+        
+#         if processed_state.shape != (1, 14):
+#             raise ValueError(f"Invalid state shape: {processed_state.shape}")
+
+#         # Get valid moves
+#         valid_moves = get_valid_moves(board, player)
+#         if not valid_moves:
+#             return None
+
+#         # Get Q-values
+#         q_values = model.predict(processed_state, verbose=0)[0]
+        
+#         # Mask invalid moves
+#         masked_q = [-np.inf if i not in valid_moves else q_values[i] for i in range(6)]
+        
+#         # Select best move and convert to native Python int
+#         best_move = int(np.argmax(masked_q))  # Convert numpy.int64 to Python int
+        
+#         return best_move if best_move in valid_moves else (
+#             random.choice(valid_moves) if valid_moves else None
+#         )
+        
+#     except Exception as e:
+#         print(f"Error in dqn_get_move: {e}")
+#         return None
         
     
 # def dqn_get_move(board, model, player="player_2"):

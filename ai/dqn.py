@@ -1,362 +1,449 @@
 import numpy as np
 import random
 from collections import deque
-from tensorflow.keras.models import Sequential
-from tensorflow.keras.layers import Dense, BatchNormalization
-from tensorflow.keras.optimizers import Adam
-from tensorflow.keras.callbacks import TensorBoard, ModelCheckpoint, EarlyStopping
 import tensorflow as tf
+from tensorflow.keras.models import Model
+from tensorflow.keras.layers import Input, Conv2D, Flatten, Dense, BatchNormalization
+from tensorflow.keras.optimizers import Adam
+from tensorflow.keras.callbacks import TensorBoard
 from ai.rules import initialize_board, get_valid_moves, make_move, is_terminal
 
-# Enable GPU memory growth
-physical_devices = tf.config.list_physical_devices('GPU')
-if physical_devices:
-    tf.config.experimental.set_memory_growth(physical_devices[0], True)
+# GPU configuration
+gpus = tf.config.experimental.list_physical_devices('GPU')
+if gpus:
+    try:
+        for gpu in gpus:
+            tf.config.experimental.set_memory_growth(gpu, True)
+    except RuntimeError as e:
+        print(e)
+
+# Add these to your training loop
+win_rates = []
+avg_rewards = []
+loss_history = []
 
 class PrioritizedReplayBuffer:
-    def __init__(self, maxlen=5000, alpha=0.6):
-        self.buffer = deque(maxlen=maxlen)
-        self.priorities = deque(maxlen=maxlen)
+    def __init__(self, capacity=10000, alpha=0.6):
+        self.capacity = capacity
         self.alpha = alpha
-
+        self.buffer = deque(maxlen=capacity)
+        self.priorities = deque(maxlen=capacity)
+    
     def add(self, state, action, reward, next_state, done):
-        max_priority = max(self.priorities) if self.priorities else 1.0
+        max_priority = max(self.priorities) if self.buffer else 1.0
         self.buffer.append((state, action, reward, next_state, done))
         self.priorities.append(max_priority)
-
+    
     def sample(self, batch_size, beta=0.4):
         priorities = np.array(self.priorities) ** self.alpha
-        probs = priorities / np.sum(priorities)
+        probs = priorities / priorities.sum()
         indices = np.random.choice(len(self.buffer), batch_size, p=probs)
         samples = [self.buffer[idx] for idx in indices]
         weights = (len(self.buffer) * probs[indices]) ** (-beta)
-        weights /= np.max(weights)
-        return samples, indices, weights
-
+        weights /= weights.max()
+        return samples, indices, np.array(weights)
+    
     def update_priorities(self, indices, priorities):
         for idx, priority in zip(indices, priorities):
             self.priorities[idx] = priority
 
-class DQNAgent:
-    def __init__(self, state_size=14, action_size=6):
-        self.state_size = state_size
+class MancalaDQN:
+    def __init__(self, state_shape=(2, 7, 2), action_size=6):
+        self.state_shape = state_shape
         self.action_size = action_size
-        self.memory = PrioritizedReplayBuffer(maxlen=5000)
-        self.gamma = 0.95
-        self.epsilon = 1.0
-        self.epsilon_min = 0.01
-        self.epsilon_decay = 0.995
-        self.learning_rate = 0.02
+        self.memory = PrioritizedReplayBuffer(capacity=50000)
+        self.gamma = 0.99   # discount factor
+        self.epsilon = 1.0  # Start with full exploration
+        self.epsilon_decay = 0.995  # Slower decay
+        self.epsilon_min = 0.05
+        self.batch_size = 64  # Smaller batch size
         self.model = self._build_model()
         self.target_model = self._build_model()
         self.update_target_model()
-        self.tensorboard = TensorBoard(log_dir="./logs")
-        self.checkpoint = ModelCheckpoint("best_model.h5", save_best_only=True, monitor="loss")
-        self.early_stopping = EarlyStopping(monitor="loss", patience=10, restore_best_weights=True)
-
+        self.tensorboard = TensorBoard(log_dir='./logs/dqn')
+    
+        # Target network update parameters
+        self.target_update_freq = 100  # Update every 100 training steps
+        self.train_step = 0  # Counter for training steps
+    
     def _build_model(self):
-        """Neural Network with proper input shape and batch normalization"""
-        model = Sequential([
-            Dense(32, input_shape=(self.state_size,), activation='relu'),
-            BatchNormalization(),
-            Dense(32, activation='relu'),
-            BatchNormalization(),
-            Dense(self.action_size, activation='linear')
-        ])
-        model.compile(loss='mse', optimizer=Adam(learning_rate=self.learning_rate))
+        """Simpler network with dense layers only"""
+        inputs = Input(shape=self.state_shape)
+        x = Flatten()(inputs)
+        x = Dense(64, activation='relu')(x)
+        x = Dense(64, activation='relu')(x)
+        outputs = Dense(self.action_size, activation='linear')(x)
+        
+        model = Model(inputs=inputs, outputs=outputs)
+        model.compile(loss='huber', optimizer=Adam(learning_rate=0.001))
         return model
-
-    def update_target_model(self):
-        self.target_model.set_weights(self.model.get_weights())
-
+        
+    def update_target_model(self, tau=0.01):
+        """Soft target network update with Polyak averaging"""
+        q_weights = self.model.get_weights()
+        target_weights = self.target_model.get_weights()
+        self.target_model.set_weights(
+            [tau*w + (1-tau)*tw for w, tw in zip(q_weights, target_weights)]
+        )
+    
     def remember(self, state, action, reward, next_state, done):
         self.memory.add(state, action, reward, next_state, done)
-
-    def _preprocess_state(self, board):
-        """Add batch dimension and normalize"""
-        return np.array(board).reshape(1, -1) / 4.0
-
+    
+    
     def get_action(self, state, valid_moves):
         if np.random.rand() <= self.epsilon:
             return random.choice(valid_moves)
-        state = self._preprocess_state(state)
-        act_values = self.model.predict(state, verbose=0)
-        return valid_moves[np.argmax(act_values[0][valid_moves])]
-
-    def replay(self, batch_size=128):
-        samples, indices, weights = self.memory.sample(batch_size)
         
-        states = []
-        targets = []
+        q_values = self.model.predict(state[np.newaxis, ...], verbose=0)[0]
+        return valid_moves[np.argmax(q_values[valid_moves])]
+    
+    def replay(self):
+        if len(self.memory.buffer) < self.batch_size:
+            return None
         
-        for state, action, reward, next_state, done in samples:
-            state = self._preprocess_state(state)
-            next_state = self._preprocess_state(next_state)
-            
-            target = self.model.predict(state, verbose=0)
-            if done:
-                target[0][action] = reward
-            else:
-                # Double DQN: Use online model to select action, target model to evaluate
-                online_action = np.argmax(self.model.predict(next_state, verbose=0)[0])
-                t = self.target_model.predict(next_state, verbose=0)
-                target[0][action] = reward + self.gamma * t[0][online_action]
-            
-            states.append(state[0])
-            targets.append(target[0])
+        # Increment training step counter
+        self.train_step += 1
         
-        # Batch training with importance sampling weights
-        self.model.fit(
-            np.array(states), 
-            np.array(targets), 
-            sample_weight=np.array(weights),
-            epochs=1, 
-            verbose=0,
-            callbacks=[self.tensorboard, self.checkpoint, self.early_stopping]
+        samples, indices, weights = self.memory.sample(self.batch_size)
+        
+        states = np.array([sample[0] for sample in samples])
+        actions = np.array([sample[1] for sample in samples])
+        rewards = np.array([sample[2] for sample in samples])
+        next_states = np.array([sample[3] for sample in samples])
+        dones = np.array([sample[4] for sample in samples])
+        
+        # Double DQN update
+        current_q = self.model.predict(next_states, verbose=0)
+        target_q = self.target_model.predict(next_states, verbose=0)
+        
+        targets = self.model.predict(states, verbose=0)
+        batch_index = np.arange(self.batch_size, dtype=np.int32)
+        
+        targets[batch_index, actions] = rewards + self.gamma * target_q[
+            batch_index, np.argmax(current_q, axis=1)] * (1 - dones)
+        
+        # Train with importance sampling weights
+        history = self.model.fit(
+            states, targets,
+            batch_size=self.batch_size,
+            sample_weight=weights,
+            verbose=0
         )
         
         # Update priorities
-        preds = self.model.predict(np.array(states), verbose=0)
-        errors = np.abs(np.array(targets) - preds).mean(axis=1)
+        preds = self.model.predict(states, verbose=0)
+        errors = np.abs(targets - preds).mean(axis=1)
         self.memory.update_priorities(indices, errors)
         
+        # Update target network periodically
+        if self.train_step % self.target_update_freq == 0:
+            self.update_target_model()
+            print(f"Updated target network at step {self.train_step}")
+        
+        # Decay epsilon
         if self.epsilon > self.epsilon_min:
             self.epsilon *= self.epsilon_decay
-
-    def train(self, env, episodes=1000, batch_size=128):
-        for e in range(episodes):
-            state = env.reset()
-            total_reward = 0
+        
+        return history.history['loss'][0]
+        
+    def preprocess_state(self, board, current_player):
+        state = np.zeros((2, 7, 2))
+        state[:, :, 0] = np.array([
+            board['player_1'][:6] + [board['player_1'][6]],
+            board['player_2'][:6] + [board['player_2'][6]]
+        ])
+        state[:, :, 1] = 1 if current_player == 'player_1' else -1
+        return state
+    
+    def evaluate(self, test_env, test_games=20, opponent='rules'):
+        """Evaluate agent against specified opponent type
+        Args:
+            test_env: Environment instance
+            test_games: Number of games to play
+            opponent: Type of opponent ('random' or 'rules')
+        Returns:
+            avg_reward: Average reward per game
+            win_rate: Percentage of games won
+            avg_moves: Average moves per game
+        """
+        total_reward = 0
+        wins = 0
+        total_moves = 0
+        
+        for _ in range(test_games):
+            test_env.reset()
+            state = self.preprocess_state(test_env.board, test_env.current_player)
             done = False
+            game_moves = 0
             
             while not done:
-                # Only the agent's moves are stored in memory
-                if env.current_player == env.agent_player:
-                    valid_moves = env.get_valid_moves()
+                game_moves += 1
+                valid_moves = test_env.get_valid_moves()
+                
+                # Agent's turn
+                if test_env.current_player == test_env.agent_player:
                     action = self.get_action(state, valid_moves)
-                    next_state, reward, done = env.step(action)
-                    self.remember(state, action, reward, next_state, done)
-                    state = next_state
-                    total_reward += reward
+                # Opponent's turn
                 else:
-                    # Let environment handle opponent's move (self-play)
-                    next_state, reward, done = env.step(None)
-                    state = next_state
+                    if opponent == 'random':
+                        action = random.choice(valid_moves)
+                    elif opponent == 'rules':
+                        action = self._rules_based_opponent(test_env.board, test_env.current_player)
+                
+                _, reward, done = test_env.step(action)
+                state = self.preprocess_state(test_env.board, test_env.current_player)
                 
                 if done:
-                    print(f"Episode: {e+1}/{episodes}, Reward: {total_reward}, Epsilon: {self.epsilon:.2f}")
-                    if len(self.memory.buffer) > batch_size:
-                        self.replay(batch_size)
+                    total_reward += reward
+                    wins += 1 if reward > 0 else 0
+                    total_moves += game_moves
+        
+        avg_reward = total_reward / test_games
+        win_rate = wins / test_games
+        avg_moves = total_moves / test_games
+        
+        return avg_reward, win_rate, avg_moves
+
+    def _rules_based_opponent(self, board, current_player):
+        """Simple rules-based opponent for evaluation"""
+        valid_moves = get_valid_moves(board, current_player)
+        
+        # 1. Prioritize extra turns
+        for move in valid_moves:
+            stones = board[current_player][move]
+            if (move + stones) % 14 == 6:  # Lands in store
+                return move
+        
+        # 2. Prioritize captures
+        for move in valid_moves:
+            stones = board[current_player][move]
+            landing_pit = (move + stones) % 14
+            if landing_pit < 6 and board[current_player][landing_pit] == 0:
+                if board[opponent_player(current_player)][5 - landing_pit] > 0:
+                    return move
+        
+        # 3. Choose move with most stones
+        return max(valid_moves, key=lambda x: board[current_player][x])
+
+    def train(self, env, episodes=1000, early_stop=True):
+        """Training loop with early stopping capabilities"""
+        win_rates = []
+        avg_rewards = []
+        avg_moves = []
+        best_win_rate = -np.inf
+        no_improvement_count = 0
+        patience = 20  # Episodes to wait before stopping
+        plateau_window = 10  # Window for reward plateau detection
+        min_improvement = 0.01  # Minimum win rate improvement
+        
+        test_env = MancalaEnv(agent_player='player_1')
+        
+        for e in range(episodes):
+            state = env.reset()
+            state = self.preprocess_state(env.board, env.current_player)
+            done = False
+            total_reward = 0
+            
+            while not done:
+                valid_moves = env.get_valid_moves()
+                action = self.get_action(state, valid_moves)
+                
+                _, reward, done = env.step(action)
+                next_state = self.preprocess_state(env.board, env.current_player)
+                
+                self.remember(state, action, reward, next_state, done)
+                loss = self.replay()
+                
+                state = next_state
+                total_reward += reward
+                
+                if done:
+                    # Save checkpoint periodically
+                    if e % 100 == 0:
+                        self.save_model(f"checkpoint_ep{e}.h5")
+                    
+                    # Evaluation and logging
+                    if e % 10 == 0:
+                        q_values = self.model.predict(state[np.newaxis,...], verbose=0)[0]
+                        print(f"Episode {e+1} - Epsilon: {self.epsilon:.3f}")
+                        print(f"Max Q-value: {np.max(q_values):.2f}, Min Q-value: {np.min(q_values):.2f}")
+                        print(f"Gradients: {[np.mean(layer.weights[0].numpy()) for layer in self.model.layers if layer.weights]}")
+                    
+                    # Full evaluation every 50 episodes
+                    if e % 50 == 0 or e == episodes-1:
+                        test_avg_reward, test_win_rate, test_move = self.evaluate(test_env, test_games=20)
+                        avg_rewards.append(test_avg_reward)
+                        win_rates.append(test_win_rate)
+                        avg_moves.append(test_move)
+                        
+                        print(f"Episode {e+1}/{episodes} - "
+                            f"Win Rate: {test_win_rate:.2%} - "
+                            f"Avg Reward: {test_avg_reward:.2f} - "
+                            f"Avg Move: {test_move:.2f} - "
+                            f"Loss: {loss if loss is not None else 0:.4f}")
+                        
+                        # Early stopping checks
+                        if early_stop:
+                            # Condition 1: Win rate threshold (95%)
+                            if test_win_rate >= 0.95:
+                                print(f"Early stopping: Reached 95% win rate")
+                                self.save_model("mancala_dqn_final.h5")
+                                return win_rates, avg_rewards
+                            
+                            # Condition 2: Improvement check
+                            if test_win_rate > best_win_rate + min_improvement:
+                                best_win_rate = test_win_rate
+                                no_improvement_count = 0
+                                self.save_model("mancala_dqn_best.h5")
+                            else:
+                                no_improvement_count += 1
+                            
+                            # Condition 3: Patience exceeded
+                            if no_improvement_count >= patience:
+                                print(f"Early stopping: No improvement for {patience} evaluations")
+                                self.save_model("mancala_dqn_final.h5")
+                                return win_rates, avg_rewards
+                            
+                            # Condition 4: Reward plateau (last N evaluations within 1% range)
+                            if len(avg_rewards) >= plateau_window:
+                                recent_rewards = avg_rewards[-plateau_window:]
+                                if max(recent_rewards) - min(recent_rewards) < 0.5:
+                                    print(f"Early stopping: Reward plateau detected")
+                                    self.save_model("mancala_dqn_final.h5")
+                                    return win_rates, avg_rewards
                     break
-            
-            
+        
+        self.save_model("mancala_dqn_final.h5")
+        return win_rates, avg_rewards
+
+    def save_model(self, filepath):
+        self.model.save(filepath)
+
+def opponent_player(current_player):
+    return 'player_2' if current_player == 'player_1' else 'player_1'
+
 class MancalaEnv:
-    def __init__(self, agent=None, agent_player="player_1"):
-        """
-        Initialize the Mancala environment.
-        :param agent: The DQN agent instance for self-play
-        :param agent_player: The player the agent is controlling ("player_1" or "player_2")
-        """
+    def __init__(self, agent_player='player_1'):
         self.board = initialize_board()
-        self.current_player = "player_1"
+        self.current_player = 'player_1'
         self.agent_player = agent_player
-        self.opponent_player = "player_2" if agent_player == "player_1" else "player_1"
-        self.agent = agent  # Store the agent reference for self-play
-
+        self.opponent_player = 'player_2' if agent_player == 'player_1' else 'player_1'
+    
+    def reset(self):
+        self.board = initialize_board()
+        self.current_player = 'player_1'
+        return self.board
+    
     def step(self, action):
-        # If it's the agent's turn, use the provided action
-        if self.current_player == self.agent_player:
-            new_board, extra_turn = make_move(self.board, self.current_player, action)
-            self.board = new_board
-        else:
-            # For opponent's turn, get action from the agent (self-play)
-            state = self._get_state()
-            valid_moves = get_valid_moves(self.board, self.current_player)
-            opponent_action = self.agent.get_action(state, valid_moves)
-            new_board, extra_turn = make_move(self.board, self.current_player, opponent_action)
-            self.board = new_board
-
+        # Execute move
+        self.board, extra_turn = make_move(self.board, self.current_player, action)
+        
         # Calculate reward from agent's perspective
         reward = self._calculate_reward()
         
         # Switch players if no extra turn
         if not extra_turn:
             self.current_player = self.opponent_player if self.current_player == self.agent_player else self.agent_player
-
-        done = is_terminal(self.board)
-        return self._get_state(), reward, done
-
-    def reset(self):
-        """Reset the environment and return the initial state."""
-        self.board = initialize_board()
-        self.current_player = "player_1"
-        return self._get_state()
-
-    def _get_state(self):
-        """
-        Get the current state of the board from the agent's perspective.
-        """
-        if self.agent_player == "player_1":
-            state = (
-                self.board["player_1"][:6] +
-                [self.board["player_1"][6]] +
-                self.board["player_2"][:6] +
-                [self.board["player_2"][6]]
-            )
-        else:
-            state = (
-                self.board["player_2"][:6] +
-                [self.board["player_2"][6]] +
-                self.board["player_1"][:6] +
-                [self.board["player_1"][6]]
-            )
-        return np.array(state)
-
-    def get_valid_moves(self):
-        """Get valid moves for the current player."""
-        return get_valid_moves(self.board, self.current_player)
-
-
-    
-    def _get_captured_stones(self):
-        """
-        Track the number of stones captured during the last move.
-        """
-        # Assuming the last move is stored in the environment
-        if hasattr(self, "last_move"):
-            _, captured_stones = self.last_move  # Extract captured stones from the last move
-            return captured_stones
-        return 0  # No capture if no move has been made
-    
-    def _earned_extra_turn(self):
-        """
-        Check if the agent earned an extra turn in the last move.
-        """
-        # Assuming the last move is stored in the environment
-        if hasattr(self, "last_move"):
-            extra_turn = self.last_move[1]  # Extract extra turn flag from the last move
-            return extra_turn
-        return False  # No extra turn if no move has been made
-
-    def _count_empty_pits(self, pits):
-        """
-        Count the number of empty pits in a given list of pits.
-        :param pits: List of stones in pits (e.g., [3, 0, 5, 0, 2, 0])
-        :return: Number of empty pits
-        """
-        return pits.count(0)  # Count pits with 0 stones
-    
-    
-    def _evaluate_potential_captures(self, agent_pits, opponent_pits):
-        """
-        Evaluate potential future captures based on the current board state.
-        :param agent_pits: List of stones in the agent's pits
-        :param opponent_pits: List of stones in the opponent's pits
-        :return: Number of potential captures
-        """
-        potential_captures = 0
-
-        for i in range(len(agent_pits)):
-            # Check if the agent can land in an empty pit and capture opponent's stones
-            if agent_pits[i] == 0 and opponent_pits[5 - i] > 0:
-                potential_captures += opponent_pits[5 - i]
-
-        return potential_captures
-
-    def _calculate_stone_imbalance(self, pits):
-        """
-        Calculate the standard deviation of stones in the pits to measure balance.
-        :param pits: List of stones in pits (e.g., [3, 0, 5, 0, 2, 0])
-        :return: Standard deviation of stones in the pits
-        """
-        if not pits:
-            return 0  # No imbalance if no pits
-
-        mean = sum(pits) / len(pits)
-        variance = sum((x - mean) ** 2 for x in pits) / len(pits)
-        return variance ** 0.5  # Standard deviation
-
-    def _calculate_reward(self):
-        """
-        Calculate the reward from the agent's perspective using 10 best heuristics.
-        """
-        # Determine agent and opponent stores
-        if self.agent_player == "player_1":
-            agent_store = self.board["player_1"][6]
-            opponent_store = self.board["player_2"][6]
-            agent_pits = self.board["player_1"][:6]
-            opponent_pits = self.board["player_2"][:6]
-        else:
-            agent_store = self.board["player_2"][6]
-            opponent_store = self.board["player_1"][6]
-            agent_pits = self.board["player_2"][:6]
-            opponent_pits = self.board["player_1"][:6]
-
-        # Heuristic 1: Score difference
-        score_diff = agent_store - opponent_store
-
-        # Heuristic 2: Stones captured (assuming captures are tracked elsewhere)
-        captured_stones = self._get_captured_stones()  # Implement this function
-        capture_reward = captured_stones * 1
-
-        # Heuristic 3: Extra turns
-        extra_turn_reward = 2 if self._earned_extra_turn() else 0  # Implement this function
-
-        # Heuristic 4: Empty pits (penalize)
-        empty_pits = self._count_empty_pits(agent_pits)  # Implement this function
-        empty_pit_penalty = -0.01 * empty_pits
-
-        # Heuristic 5: Opponent's empty pits (reward)
-        opponent_empty_pits = self._count_empty_pits(opponent_pits)  # Implement this function
-        opponent_empty_reward = 0.01 * opponent_empty_pits
-
-        # Heuristic 6: Stones in store
-        store_reward = agent_store * 0.04
-
-        # Heuristic 7: Stones in opponent's store (penalize)
-        opponent_store_penalty = -opponent_store * 0.01
-
-        # Heuristic 8: Potential captures (reward)
-        potential_captures = self._evaluate_potential_captures(agent_pits, opponent_pits)  # Implement this function
-        potential_capture_reward = potential_captures * 0.04
-
-        # Heuristic 9: Balance of stones
-        stone_imbalance = self._calculate_stone_imbalance(agent_pits)  # Implement this function
-        balance_reward = -stone_imbalance * 0.01
-
-        # Heuristic 10: Endgame advantage
-        endgame_reward = 0
-        if is_terminal(self.board):
-            if agent_store > 24:
-                endgame_reward = 1  # Win
-            elif opponent_store > 24:
-                endgame_reward = -1  # Lose
-            else:
-                endgame_reward = 0.5 if score_diff > 0 else -0.5  # Draw with advantage
-
-        # Combine all rewards
-        reward = (
-            score_diff * 0.1 +
-            capture_reward +
-            extra_turn_reward +
-            empty_pit_penalty +
-            opponent_empty_reward +
-            store_reward +
-            opponent_store_penalty +
-            potential_capture_reward +
-            balance_reward +
-            endgame_reward
-        )
-
-        return reward
         
-# Usage
+        done = is_terminal(self.board)
+        return self.board, reward, done
+    
+    def get_valid_moves(self):
+        return get_valid_moves(self.board, self.current_player)
+    
+    def _calculate_reward(self, last_move=None):
+        """Advanced reward function combining:
+        - Immediate rewards (captures, extra turns)
+        - Positional advantages
+        - Defensive considerations
+        - Game phase awareness
+        - Mobility and tempo control
+        """
+        # Base values
+        my_store = self.board[self.agent_player][6]
+        opp_store = self.board[self.opponent_player][6]
+        my_pits = self.board[self.agent_player][:6]
+        opp_pits = self.board[self.opponent_player][:6]
+        total_seeds = sum(my_pits) + sum(opp_pits) + my_store + opp_store
+        
+        # Terminal state reward
+        if is_terminal(self.board):
+            return 5.0 if my_store > 24 else (-5.0 if my_store < 24 else 0)
+        
+        # 1. Game phase calculation (0=early, 1=late)
+        game_phase = 1 - (total_seeds / 96.0)
+        
+        # 2. Immediate Rewards -----------------------------------------------------
+        reward = 0
+        
+        # Extra turn detection (needs move tracking)
+        if last_move is not None:
+            stones = my_pits[last_move]
+            landing_pit = (last_move + stones) % 14
+            if landing_pit == 6:  # Extra turn
+                reward += 3.0
+        
+        # 3. Capture Analysis ------------------------------------------------------
+        def calculate_captures(pits, opp_pits):
+            captures = 0
+            for i in range(6):
+                if pits[i] == 0 and opp_pits[5-i] > 0:
+                    # Weight by position (central pits more valuable)
+                    position_weights = [0.5, 0.8, 1.2, 1.5, 1.2, 0.8]
+                    captures += opp_pits[5-i] * position_weights[i]
+            return captures
+        
+        # Positive captures
+        my_captures = calculate_captures(my_pits, opp_pits)
+        reward += my_captures * 0.4
+        
+        # Negative captures (opponent's opportunities)
+        opp_captures = calculate_captures(opp_pits, my_pits)
+        reward -= opp_captures * 0.6  # Higher penalty
+        
+        # 4. Positional Advantage --------------------------------------------------
+        position_weights = [0.5, 0.8, 1.2, 1.5, 1.2, 0.8]
+        positional_value = sum(w*p for w,p in zip(position_weights, my_pits)) / 10.0
+        reward += positional_value
+        
+        # 5. Defensive Considerations ----------------------------------------------
+        # Block opponent's extra turns
+        for i in range(6):
+            if opp_pits[i] == (13 - i):  # Would give extra turn
+                reward -= 2.0 * position_weights[i]
+        
+        # 6. Progressive Rewards ---------------------------------------------------
+        # Late game: store difference matters more
+        store_diff = (my_store - opp_store) / 24.0
+        reward += store_diff * (3.0 * game_phase)
+        
+        # Early game: pit control matters more
+        pit_diff = (sum(my_pits) - sum(opp_pits)) / 24.0
+        reward += pit_diff * (2.5 * (1 - game_phase))
+        
+        # 7. Mobility and Tempo ----------------------------------------------------
+        # Valid moves that can reach the store
+        future_moves = sum(1 for i in range(6) if my_pits[i] >= (6 - i))
+        reward += future_moves * 0.2
+        
+        # Large seed groups (tempo control)
+        large_groups = sum(1 for s in my_pits if s > 10)
+        reward += large_groups * 0.3
+        
+        # 8. Stone Conservation ----------------------------------------------------
+        if last_move is not None:
+            if my_pits[last_move] == 0:  # Emptied a pit
+                reward -= 1.0 if game_phase < 0.5 else 0.5
+        
+        # Normalize and return
+        return np.clip(reward, -5.0, 5.0)
+
+# Training
 if __name__ == "__main__":
-    agent = DQNAgent()
-    env = MancalaEnv(agent=agent, agent_player="player_1")  # Pass the agent to the environment
+    env = MancalaEnv(agent_player='player_1')
+    agent = MancalaDQN(state_shape=(2,7,2))  # 2 players x 7 positions x 2 channels (stones + turn)
     
-    # Train the agent
-    agent.train(env, episodes=500)
-    
-    # Save the trained model
-    agent.model.save("mancala_dqn.h5")
+    print("Starting training...")
+    agent.train(env, episodes=1000)
+    agent.save_model("mancala_dqn_improved.h5")
+    print("Training completed. Model saved.")
