@@ -10,17 +10,17 @@ from ai.alpha_beta import minimax_alpha_beta
 from ai.minimax import simple_minimax
 from ai.MCTS import mcts_decide
 from ai.advanced_heuristic import advanced_heuristic_minimax
-from ai.rules import get_valid_moves
+from ai.rules import get_valid_moves, initialize_board, make_move, is_terminal
 import random
 
 # Initialize Flask app
 app = Flask(__name__)
 CORS(app)
 
-# Load DQN model (once at startup)
-dqn_model = load_model('mancala_dqn_final.h5', compile=False)
+# Load models (once at startup)
+dqn_model = load_model('models/mancala_dqn_best.h5', compile=False)
+a3c_model = load_model('models/mancala_a3c_final.h5', compile=False)  # Load A3C model
 
-# Your existing AI code
 def js_to_python_board(js_board):
     return {
         "player_1": js_board[:7],
@@ -30,17 +30,119 @@ def js_to_python_board(js_board):
 def python_to_js_board(python_board):
     return python_board["player_1"] + python_board["player_2"]
 
+def preprocess_state_for_a3c(board, current_player, agent_player="player_1"):
+    """Preprocess board state for A3C model with 29 features"""
+    p1_pits = np.array(board['player_1'][:6])
+    p1_store = board['player_1'][6]
+    p2_pits = np.array(board['player_2'][:6])
+    p2_store = board['player_2'][6]
+    
+    if agent_player == 'player_1':
+        features = [
+            # Player 1 perspective (7)
+            *(p1_pits / 24.0),  # 6 features
+            p1_store / 48.0,     # 1 feature
+            
+            # Player 2 perspective (7)
+            *(p2_pits / 24.0),   # 6
+            p2_store / 48.0,     # 1
+            
+            # Relative differences (7)
+            *(p1_pits - p2_pits) / 24.0,  # 6
+            (p1_store - p2_store) / 48.0, # 1
+            
+            # Turn information (2)
+            1.0 if current_player == 'player_1' else 0.0,
+            1.0 if current_player == 'player_2' else 0.0,
+            
+            # Game phase (1)
+            min(1.0, (p1_store + p2_store) / 30.0),
+            
+            # Strategic features (5)
+            sum(p1_pits) / 24.0,
+            sum(p2_pits) / 24.0,
+            float(any(p == 0 for p in p1_pits)),
+            float(any(p == 0 for p in p2_pits)),
+            1.0  # Constant bias term to reach 29 features
+        ]
+    else:
+        # When agent is player_2, we swap perspectives
+        features = [
+            # Player 2 perspective (7)
+            *(p2_pits / 24.0),  # 6 features
+            p2_store / 48.0,     # 1 feature
+            
+            # Player 1 perspective (7)
+            *(p1_pits / 24.0),   # 6
+            p1_store / 48.0,     # 1
+            
+            # Relative differences (7)
+            *(p2_pits - p1_pits) / 24.0,  # 6
+            (p2_store - p1_store) / 48.0, # 1
+            
+            # Turn information (2)
+            1.0 if current_player == 'player_2' else 0.0,
+            1.0 if current_player == 'player_1' else 0.0,
+            
+            # Game phase (1)
+            min(1.0, (p1_store + p2_store) / 30.0),
+            
+            # Strategic features (5)
+            sum(p2_pits) / 24.0,
+            sum(p1_pits) / 24.0,
+            float(any(p == 0 for p in p2_pits)),
+            float(any(p == 0 for p in p1_pits)),
+            1.0  # Constant bias term to reach 29 features
+        ]
+    
+    return np.array(features, dtype=np.float32)
+
+def a3c_get_move(board, model, player="player_1"):
+    """Get best move using trained A3C model"""
+    try:
+        # Preprocess state
+        state = preprocess_state_for_a3c(board, player, player)  # Pass player as agent_player
+        
+        # Get valid moves
+        valid_moves = get_valid_moves(board, player)
+        if not valid_moves:
+            return None
+            
+        # Get policy and value from model
+        policy, _ = model.predict(state[np.newaxis, ...], verbose=0)
+        policy = policy[0]  # Remove batch dimension
+        
+        # Create mask for valid moves (0-5 for pits)
+        valid_mask = np.zeros(6, dtype=bool)  # Assuming 6 actions (pits 0-5)
+        for move in valid_moves:
+            pit_index = move if move < 6 else move - 7  # Convert to 0-5 index
+            valid_mask[pit_index] = True
+        
+        # Apply mask and renormalize
+        masked_policy = policy.copy()
+        masked_policy[~valid_mask] = 0  # Zero out invalid moves
+        
+        # Check if we have any valid probabilities left
+        if np.sum(masked_policy) <= 0:
+            # If all zeros (shouldn't happen with exploration), fall back to uniform
+            masked_policy[valid_mask] = 1.0 / np.sum(valid_mask)
+        else:
+            # Normalize valid probabilities
+            masked_policy = masked_policy / np.sum(masked_policy)
+        
+        # Sample action
+        action = np.random.choice(6, p=masked_policy)
+        
+        # Convert back to move format if needed (0-5 for pits, 7-12 for stores)
+        return action if action in valid_moves else None
+        
+    except Exception as e:
+        print(f"Error in a3c_get_move: {str(e)}")
+        valid_moves = get_valid_moves(board, player)
+        return random.choice(valid_moves) if valid_moves else None
+
 def dqn_get_move(board, model, player="player_2"):
-    """Get best move using trained DQN model with proper state preprocessing.
-    
-    Args:
-        board: Current game board state as a dictionary with 'player_1' and 'player_2' keys
-        model: Trained DQN model that expects input shape (2, 7, 2)
-        player: The player making the move ('player_1' or 'player_2')
-    
-    Returns:
-        int: Best move (0-5) according to the model, or random valid move if error occurs
-    """
+    """Get best move using trained DQN model with proper state preprocessing."""
     try:
         # Preprocess the state exactly like in the MancalaDQN class
         state = np.zeros((2, 7, 2))
@@ -81,78 +183,12 @@ def dqn_get_move(board, model, player="player_2"):
         # Fallback to random valid move if error occurs
         valid_moves = get_valid_moves(board, player)
         return random.choice(valid_moves) if valid_moves else None
-        
-# def dqn_get_move(board, model, player="player_2"):
-#     """Get best move using trained DQN model with proper serialization"""
-#     try:
-#         # Convert board to numpy array and normalize
-#         state = np.array(
-#             board["player_1"][:6] + 
-#             [board["player_1"][6]] + 
-#             board["player_2"][:6] + 
-#             [board["player_2"][6]],
-#             dtype=np.float32
-#         ) / 4.0
-        
-#         processed_state = state.reshape(1, -1)
-        
-#         if processed_state.shape != (1, 14):
-#             raise ValueError(f"Invalid state shape: {processed_state.shape}")
-
-#         # Get valid moves
-#         valid_moves = get_valid_moves(board, player)
-#         if not valid_moves:
-#             return None
-
-#         # Get Q-values
-#         q_values = model.predict(processed_state, verbose=0)[0]
-        
-#         # Mask invalid moves
-#         masked_q = [-np.inf if i not in valid_moves else q_values[i] for i in range(6)]
-        
-#         # Select best move and convert to native Python int
-#         best_move = int(np.argmax(masked_q))  # Convert numpy.int64 to Python int
-        
-#         return best_move if best_move in valid_moves else (
-#             random.choice(valid_moves) if valid_moves else None
-#         )
-        
-#     except Exception as e:
-#         print(f"Error in dqn_get_move: {e}")
-#         return None
-        
-    
-# def dqn_get_move(board, model, player="player_2"):
-#     """Get best move using trained DQN model with validation"""
-#     state = np.array(
-#         board["player_1"][:6] + 
-#         [board["player_1"][6]] + 
-#         board["player_2"][:6] + 
-#         [board["player_2"][6]]
-#     )
-    
-#     processed_state = (np.array(state, dtype=np.float32).reshape(1, -1) / 4.0)
-#     assert processed_state.shape == (1, 14), "Invalid state shape"
-    
-#     valid_moves = get_valid_moves(board, player)
-#     if not valid_moves:
-#         return None
-
-#     q_values = model.predict(processed_state, verbose=0)[0]
-#     masked_q = [-np.inf if i not in valid_moves else q_values[i] for i in range(6)]
-    
-#     best_move = np.argmax(masked_q)
-    
-#     # Fallback to random valid move if needed
-#     return best_move if best_move in valid_moves else (
-#         random.choice(valid_moves) if valid_moves else None
-#     )
 
 @app.route('/ai-move', methods=['POST'])
 def get_ai_move():
     data = request.json
     js_board = data['board']
-    ai_type = data.get('ai', 'advanced')  # Options: minimax, alpha_beta, advanced, dqn
+    ai_type = data.get('ai', 'advanced')  # Options: minimax, alpha_beta, advanced, dqn, a3c
     depth = data.get('depth', 7)
     currentPlayer = data.get('currentPlayer', 'player_1')
     
@@ -163,33 +199,35 @@ def get_ai_move():
     
     if ai_type == 'minimax':
         _, best_move = simple_minimax(
-        board=python_board,
-        depth=depth,
-        current_player=currentPlayer,
-        maximizing_for=currentPlayer,
-    )
+            board=python_board,
+            depth=depth,
+            current_player=currentPlayer,
+            maximizing_for=currentPlayer,
+        )
     elif ai_type == 'alpha_beta':
         _, best_move = minimax_alpha_beta(
-        board=python_board,
-        depth=depth,
-        alpha=-math.inf,
-        beta=math.inf,
-        current_player=currentPlayer,
-        maximizing_for=currentPlayer,
-    )
+            board=python_board,
+            depth=depth,
+            alpha=-math.inf,
+            beta=math.inf,
+            current_player=currentPlayer,
+            maximizing_for=currentPlayer,
+        )
     elif ai_type == 'advanced':
         _, best_move = advanced_heuristic_minimax(
-        board=python_board,
-        depth=depth,
-        alpha=-math.inf,
-        beta=math.inf,
-        current_player=currentPlayer,
-        maximizing_for=currentPlayer,
-    )
+            board=python_board,
+            depth=depth,
+            alpha=-math.inf,
+            beta=math.inf,
+            current_player=currentPlayer,
+            maximizing_for=currentPlayer,
+        )
     elif ai_type == 'dqn':
-        best_move = dqn_get_move(python_board, dqn_model)
+        best_move = dqn_get_move(python_board, dqn_model, currentPlayer)
+    elif ai_type == 'a3c':
+        best_move = a3c_get_move(python_board, a3c_model, currentPlayer)
     elif ai_type == 'MCTS':
-        best_move = mcts_decide(python_board, player=currentPlayer, simulations=1000, time_limit=5)
+        best_move = mcts_decide(python_board, player=currentPlayer, time_limit=15)
     else:
         return jsonify({'error': 'Invalid AI type selected.'}), 400
     
@@ -200,10 +238,10 @@ def get_ai_move():
         else:
             js_move = best_move + 7  # Player 2 moves are 7-12
     else:
-        js_move = random.choice()
+        valid_moves = get_valid_moves(python_board, currentPlayer)
+        js_move = random.choice(valid_moves) if valid_moves else None
     
     return jsonify({"move": js_move})
-
 
 if __name__ == '__main__':
     app.run(port=5000, debug=True)

@@ -9,3 +9,6 @@ Run the server by: python server.py
 
 Run the UI frontend by: python -m http.server 8000
 And access: localhost:8000/mancala.html
+
+
+python -m tensorboard.main --logdir=logs/dqn

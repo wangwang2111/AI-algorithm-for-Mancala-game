@@ -12,6 +12,7 @@ function playBackgroundSound() {
   }
 }
 
+
 // ui.js
 class MancalaUI {
   constructor() {
@@ -24,7 +25,8 @@ class MancalaUI {
 
     // Track which player the AI controls (0 for Player 1, 1 for Player 2)
     this.aiPlayer = 1; // Start with AI as Player 2
-  
+    
+
     
     // Add event listeners for AI controls
     document.getElementById('ai-algorithm').addEventListener('change', () => this.updateAISettings());
@@ -67,7 +69,6 @@ class MancalaUI {
     this.ai = new MancalaAI(this.getAISettings());
     console.log('AI Settings Updated:', this.getAISettings());
   }
-
 
   initializeEventListeners() {
     this.pits.forEach(pit => {

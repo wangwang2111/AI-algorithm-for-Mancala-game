@@ -11,11 +11,19 @@ from ai.minimax import simple_minimax
 from ai.advanced_heuristic import advanced_heuristic_minimax
 from ai.MCTS import mcts_decide
 from concurrent.futures import ProcessPoolExecutor
-from ai.dqn import DQNAgent
+from ai.dqn import DQNAgent, MancalaEnv
+from ai.A3C import A3CAgent  # Import the A3C agent
+from multiprocessing import cpu_count
+from tensorflow.keras.models import load_model
+from server import preprocess_state_for_a3c  # At top of simulations.py
 
 # Load DQN model
-agent = DQNAgent()
-agent.model.load_weights("mancala_dqn.h5")
+dqn_agent = DQNAgent()
+dqn_agent.model.load_weights("models/mancala_dqn_best.h5")
+
+# Load A3C model
+# a3c_model = load_model('models/mancala_a3c_final.h5', compile=False)  # Load A3C model
+
 
 def random_strategy(board, player):
     return random.choice(get_valid_moves(board, player))
@@ -54,15 +62,58 @@ def mcts_strategy(board, player):
 def dqn_strategy(board, player):
     state = np.array(board["player_1"][:6] + [board["player_1"][6]] + board["player_2"][:6] + [board["player_2"][6]])
     valid_moves = get_valid_moves(board, player)
-    return agent.get_action(state, valid_moves)
+    return dqn_agent.get_action(state, valid_moves)
     
+def a3c_strategy(board, player):
+    # env = MancalaEnv(agent_player=player)  # Create an environment for preprocessing
+    # state = a3c_agent.preprocess_state(board, player)
+
+    # Preprocess state
+    state = preprocess_state_for_a3c(board, player, player)  # Pass player as agent_player
+    
+    # Get valid moves
+    valid_moves = get_valid_moves(board, player)
+    # Get policy and value from model
+    policy, _ = a3c_model.predict(state[np.newaxis, ...], verbose=0)
+    policy = policy[0]  # Remove batch dimension
+    
+    # Create mask for valid moves (0-5 for pits)
+    valid_mask = np.zeros(6, dtype=bool)  # Assuming 6 actions (pits 0-5)
+    for move in valid_moves:
+        pit_index = move if move < 6 else move - 7  # Convert to 0-5 index
+        valid_mask[pit_index] = True
+    
+    # Apply mask and renormalize
+    masked_policy = policy.copy()
+    masked_policy[~valid_mask] = 0  # Zero out invalid moves
+    
+    # Check if we have any valid probabilities left
+    if np.sum(masked_policy) <= 0:
+        # If all zeros (shouldn't happen with exploration), fall back to uniform
+        masked_policy[valid_mask] = 1.0 / np.sum(valid_mask)
+    else:
+        # Normalize valid probabilities
+        masked_policy = masked_policy / np.sum(masked_policy)
+    
+    # Sample action
+    action = np.random.choice(6, p=masked_policy)
+    
+    # Convert back to move format if needed (0-5 for pits, 7-12 for stores)
+    return action if action in valid_moves else None
+    
+    # except Exception as e:
+    #     print(f"Error in a3c_get_move: {str(e)}")
+    #     valid_moves = get_valid_moves(board, player)
+    #     return random.choice(valid_moves) if valid_moves else None
+
 strategies = [
+    # {"name": "A3C", "function": a3c_strategy},
     {"name": "Random", "function": random_strategy},
     {"name": "Simple Minimax", "function": simple_minimax_strategy},
     {"name": "Minimax Alpha-Beta", "function": minimax_alpha_beta_strategy},
     {"name": "Advanced Heuristic", "function": advanced_heuristic_strategy},
-    # {"name": "MCTS", "function": mcts_strategy},
-    {"name": "DQN", "function": dqn_strategy},
+    {"name": "MCTS", "function": mcts_strategy},
+    # {"name": "DQN", "function": dqn_strategy},
 ]
 
 def simulate_game(player1_strategy, player2_strategy):
@@ -148,59 +199,56 @@ def run_simulations_for_pair(pair, num_games):
         })
     return results
 
-# def run_comprehensive_simulations(num_games=10):
-#     results = []
-#     combinations = list(permutations(strategies, 2))
-#     total_combinations = len(combinations)
-    
-#     # Master progress bar for all strategy pairs
-#     with tqdm(total=total_combinations, desc="Overall Progress") as overall_progress:
-#         with ProcessPoolExecutor() as executor:
-#             futures = []
-#             for pair in combinations:
-#                 future = executor.submit(run_simulations_for_pair, pair, num_games)
-#                 future.add_done_callback(lambda _: overall_progress.update(1))
-#                 futures.append(future)
-            
-#             for future in futures:
-#                 results.extend(future.result())
-    
-#     return results
-
-def run_comprehensive_simulations(num_games=100):
+def run_comprehensive_simulations(num_games=1000):
     """Run simulations where one player is always MCTS and the other is any other strategy."""
     results = []
     
-    # Find the MCTS strategy
-    dqn_strategy = next(s for s in strategies if s["name"] == "DQN")
-    other_strategies = [s for s in strategies if s["name"] != "DQN"]
+    # dqn_strategy = next(s for s in strategies if s["name"] == "DQN")
+    # other_strategies = [s for s in strategies if s["name"] != "DQN"]
     
-    # Create all combinations where one player is MCTS and the other is any other strategy
+    # # Create all combinations where one player is MCTS and the other is any other strategy
     combinations = []
-    for strategy in other_strategies:
-        combinations.append((dqn_strategy, strategy))  # MCTS as player1
-        combinations.append((strategy, dqn_strategy))  # MCTS as player2
+    # for strategy in other_strategies:
+    #     combinations.append((dqn_strategy, strategy))  # MCTS as player1
+    #     combinations.append((strategy, dqn_strategy))  # MCTS as player2
+    # Create every combination (Cartesian product) of strategies
+    combinations = list(product(strategies, strategies))
     
+    print("Combinations: ", combinations)
     total_combinations = len(combinations)
+        # Memory check at game start
+    import psutil
+    if psutil.virtual_memory().percent > 85:
+        raise MemoryError("High memory at game start")
+        # Reduce workers to half of available CPUs
+    # max_workers = max(1, cpu_count() // 2)
     
     # Master progress bar for all strategy pairs
     with tqdm(total=total_combinations, desc="Overall Progress") as overall_progress:
         with ProcessPoolExecutor() as executor:
             futures = []
             for pair in combinations:
-                future = executor.submit(run_simulations_for_pair, pair, num_games)
+                future = executor.submit(
+                    run_simulations_for_pair, 
+                    pair, 
+                    num_games
+                )
                 future.add_done_callback(lambda _: overall_progress.update(1))
                 futures.append(future)
             
             for future in futures:
-                results.extend(future.result())
+                try:
+                    results.extend(future.result())
+                except Exception as e:
+                    print(f"Error in worker: {e}")
+                    continue
     
     return results
 
 if __name__ == "__main__":
-    simulation_results = run_comprehensive_simulations(num_games=500)
+    simulation_results = run_comprehensive_simulations(num_games=1000)
     df = pd.DataFrame(simulation_results)
-    df.to_csv("mancala_simulation_dqn.csv", index=False)
+    df.to_csv("mancala_simulation_another_1000.csv", index=False)
     
     print("\nSummary Statistics:")
     print(df.groupby(['Player1_Strategy', 'Player2_Strategy']).agg({

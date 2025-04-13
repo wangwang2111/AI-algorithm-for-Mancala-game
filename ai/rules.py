@@ -10,27 +10,25 @@ def is_terminal(board):
     return sum(board["player_1"][:6]) == 0 or sum(board["player_2"][:6]) == 0
 
 def evaluate(board, current_player, last_move=None):
-    """Advanced board evaluation combining all strategic heuristics"""
+    """Advanced board evaluation with corrected heuristics"""
     opponent = "player_2" if current_player == "player_1" else "player_1"
     
     my_store = board[current_player][6]
     opp_store = board[opponent][6]
     my_pits = board[current_player][:6]
     opp_pits = board[opponent][:6]
-    total_seeds = sum(my_pits) + sum(opp_pits) + my_store + opp_store
     
-    # Terminal state evaluation
+    # Terminal state returns actual score difference
     if is_terminal(board):
-        if my_store > 24: return 1000  # Win
-        if opp_store > 24: return -1000  # Loss
-        return 500 if my_store > opp_store else -500  # Draw advantage
+        return my_store - opp_store  # Range: [-48, 48]
     
-    # 1. Game Phase Calculation
-    game_phase = 1 - (total_seeds / 96.0)  # 0=early, 1=late
+    # 1. Game Phase Calculation (based on captured seeds)
+    total_in_stores = my_store + opp_store
+    game_phase = total_in_stores / 48.0  # 0=early, 1=late
     
     # 2. Core Heuristics ------------------------------------------------------
     score_diff = my_store - opp_store
-    position_weights = [0.5, 0.8, 1.2, 1.5, 1.2, 0.8]  # Central pits more valuable
+    position_weights = [0.8, 1.0, 1.2, 1.5, 1.8, 2.0]  # Pit weights
     
     # 3. Capture Analysis
     def calculate_captures(pits, opp_pits):
@@ -46,77 +44,61 @@ def evaluate(board, current_player, last_move=None):
     # 4. Extra Turn Potential
     extra_turns = sum(
         1 for i in range(6) 
-        if my_pits[i] == (6 - i)  # Exact stones to land in store
+        if my_pits[i] == (6 - i)  # Correct stone count for store landing
     )
     
-    # 5. Move-Specific Analysis (if last_move provided)
+    # 5. Move-Specific Analysis (activated via MCTSNode)
     move_bonus = 0
     if last_move is not None:
         stones = my_pits[last_move]
-        landing_pit = (last_move + stones) % 14
+        if stones == 0:  # Invalid move, skip
+            return -100  # Penalize invalid
         
-        # Immediate extra turn
-        if landing_pit == 6:
+        # Simulate move accurately using game rules
+        simulated_board, extra_turn = make_move(copy.deepcopy(board), current_player, last_move)
+        
+        # Check for immediate extra turn
+        if extra_turn:
             move_bonus += 3.0
-            
-        # Immediate capture
-        if landing_pit < 6 and my_pits[landing_pit] == 0:
-            move_bonus += opp_pits[5-landing_pit] * 0.4
-            
-        # Positional advantage
-        move_bonus += position_weights[last_move] * 0.5
         
-        # Danger zone seeding
-        danger_zones = [0, 1, 5]
-        for i in range(stones):
-            pit = (last_move + i + 1) % 14
-            if pit in danger_zones and pit < 6:
-                move_bonus += 0.2
-                
-        # Seed conservation penalty
-        if my_pits[last_move] == stones and landing_pit != 6:
-            move_bonus -= 1.0 if game_phase < 0.5 else 0.5
+        # Check for captures in simulated board
+        landing_pit = (last_move + stones) % 14
+        if landing_pit < 6 and simulated_board[current_player][landing_pit] == 1:
+            opp_pit = 5 - landing_pit
+            move_bonus += simulated_board[opponent][opp_pit] * 0.4
+        
+        # Positional bonus
+        move_bonus += position_weights[last_move] * 0.5
     
-    # 6. Defensive Considerations ---------------------------------------------
-    # Opponent extra turn threats
+    # 6. Defensive Considerations
     opp_extra_threats = sum(
         position_weights[i] 
         for i in range(6) 
-        if opp_pits[i] == (13 - i)
+        if opp_pits[i] == (6 - i)  # Correct extra turn check
     )
     
-    # 7. Progressive Strategy -------------------------------------------------
+    # 7. Progressive Strategy
     late_game_value = score_diff * 3.0 * game_phase
     early_game_value = (sum(my_pits) - sum(opp_pits)) * 2.5 * (1 - game_phase)
     
-    # 8. Mobility and Tempo ---------------------------------------------------
+    # 8. Mobility and Tempo
     future_moves = sum(1 for i in range(6) if my_pits[i] >= (6 - i))
-    large_groups = sum(1 for s in my_pits if s > 10)
     
-    # 9. Combined Evaluation --------------------------------------------------
+    # 9. Combined Evaluation
     evaluation = (
-        # Core components
         score_diff * 2.0 +
         my_captures * 1.5 -
         opp_captures * 2.0 +
         extra_turns * 2.0 -
         opp_extra_threats * 1.8 +
-        
-        # Progressive strategy
         late_game_value +
         early_game_value +
-        
-        # Move-specific bonuses
         move_bonus +
-        
-        # Additional heuristics
-        (sum(my_pits) * 0.1 - sum(opp_pits) * 0.1) +  # Stone count
-        (future_moves * 0.3) +  # Mobility
-        (large_groups * 0.4)  # Tempo control
+        (sum(my_pits) * 0.1 - sum(opp_pits) * 0.1) +
+        (future_moves * 0.3)
     )
     
-    # 10. Normalization and return
-    return evaluation / 10.0  # Scale to reasonable range
+    return evaluation  # No division; rely on rollout normalization
 
 def get_valid_moves(board, player):
     return [i for i in range(6) if board[player][i] > 0]

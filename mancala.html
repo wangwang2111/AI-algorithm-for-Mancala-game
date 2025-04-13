@@ -2,55 +2,21 @@
 <html lang="en">
 
 <head>
+    <style id="initial-theme">
+        body { visibility: hidden; }
+    </style>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Mancala AI</title>
     <link rel="stylesheet" href="public/main.css">
-    <style>
-        /* Additional Enhancements */
-        .button {
-            padding: 10px 20px;
-            font-size: 16px;
-            border: none;
-            border-radius: 10px;
-            cursor: pointer;
-            transition: background 0.3s;
+    <link rel="stylesheet" href="public/darkmode.css">
+    <script>
+        const savedTheme = localStorage.getItem('darkMode') === 'true';
+        if (savedTheme) {
+            document.documentElement.classList.add('dark-mode');
         }
-        
-        .button-primary {
-            background: #3498db;
-            color: white;
-        }
-        
-        .button-primary:hover {
-            background: #2980b9;
-        }
-        
-        .button-secondary {
-            background: #2ecc71;
-            color: white;
-        }
-        
-        .button-secondary:hover {
-            background: #27ae60;
-        }
-        
-        .game-container {
-            display: flex;
-            flex-direction: column;
-            align-items: center;
-        }
-
-        .ai-controls {
-            display: flex;
-            gap: 15px;
-            align-items: center;
-            justify-content: center;
-            background: white;
-            padding: 10px;
-            border-radius: 10px;
-        }
-    </style>
+        document.getElementById('initial-theme').remove();
+    </script>
 </head>
 
 <body>
@@ -61,8 +27,9 @@
             <option value="advanced">Advanced Heuristic</option>
             <option value="alpha_beta">Alpha-Beta Pruning</option>
             <option value="minimax">Minimax</option>
-            <option value="MCTS">MCTS</option>
+            <!-- <option value="MCTS">MCTS</option> -->
             <option value="dqn">Neural Network (DQN)</option>
+            <option value="a3c">A3C</option>
         </select>
 
         <div id="depth-control" class="hidden">
@@ -162,7 +129,22 @@
     </div>
     
     <button id="mute-button" class="button">🔊</button>
+    <!-- Settings Button -->
     <button id="settings-button" class="button">⚙️ Settings</button>
+
+    <!-- Settings Popup Panel -->
+    <div id="settings-panel" class="settings-panel hidden">
+        <h3>Settings</h3>
+        <div class="setting-item">
+            <label for="dark-mode-toggle" class="label-theme">🌙 Dark Mode</label>
+            <button id="dark-mode-toggle" class="button">
+                <span class="light-icon hidden">🌞</span>
+                <span class="dark-icon">🌙</span>
+            </button>
+        </div>
+        <button id="close-settings" class="button">❌ Close</button>
+    </div>
+
 
     <audio id="stone-sound" src="public/stone-sound.mp3"></audio>
     <audio id="game-over-sound" src="public/game-over-sound.mp3"></audio>
@@ -171,5 +153,67 @@
     <script type="module" src="components/game.js"></script>
     <script type="module" src="components/ai.js"></script>
     <script type="module" src="ui.js"></script>
+    <script>
+        document.addEventListener('DOMContentLoaded', function () {
+            const settingsButton = document.getElementById('settings-button');
+            const settingsPanel = document.getElementById('settings-panel');
+            const closeSettings = document.getElementById('close-settings');
+            const darkModeToggle = document.getElementById('dark-mode-toggle');
+            const darkModeLabel = document.querySelector('.label-theme');
+            const lightIcons = document.querySelectorAll(".light-icon");
+            const darkIcons = document.querySelectorAll(".dark-icon");
+    
+            // Helper: Cookie functions
+            function setCookie(name, value, days) {
+                const date = new Date();
+                date.setTime(date.getTime() + (days * 24 * 60 * 60 * 1000));
+                document.cookie = `${name}=${value};expires=${date.toUTCString()};path=/`;
+            }
+    
+            function getCookie(name) {
+                const value = `; ${document.cookie}`;
+                const parts = value.split(`; ${name}=`);
+                if (parts.length === 2) return parts.pop().split(';').shift();
+            }
+    
+            function applyDarkModeUI(isDark) {
+                document.body.classList.toggle('dark-mode', isDark);
+                darkModeLabel.textContent = isDark ? '☀️ Light Mode' : '🌙 Dark Mode';
+    
+                lightIcons.forEach(icon => icon.classList.toggle('hidden', !isDark));
+                darkIcons.forEach(icon => icon.classList.toggle('hidden', isDark));
+            }
+    
+            // Open/close settings
+            settingsButton.addEventListener('click', () => {
+                settingsPanel.classList.remove('hidden');
+            });
+    
+            closeSettings.addEventListener('click', () => {
+                settingsPanel.classList.add('hidden');
+            });
+    
+            // Toggle dark mode
+            darkModeToggle.addEventListener('click', () => {
+                const isDark = !document.body.classList.contains('dark-mode');
+                applyDarkModeUI(isDark);
+                localStorage.setItem('darkMode', isDark);
+                setCookie('darkMode', isDark, 30);
+            });
+    
+            // Apply dark mode on load (localStorage OR cookie)
+            const isDarkMode =
+                localStorage.getItem('darkMode') === 'true' ||
+                getCookie('darkMode') === 'true';
+    
+            applyDarkModeUI(isDarkMode);
+    
+            // Remove initial hidden style if present
+            const initialTheme = document.getElementById('initial-theme');
+            if (initialTheme) initialTheme.remove();
+        });
+    </script>
+    
+    
 </body>
 </html>
