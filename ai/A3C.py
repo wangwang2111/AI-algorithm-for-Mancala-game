@@ -7,7 +7,7 @@ import threading
 import multiprocessing
 from collections import deque
 import os
-from ai.dqn import MancalaEnv
+from dqn import MancalaEnv
 from ai.rules import initialize_board, get_valid_moves, make_move, is_terminal
 
 class A3CAgent:

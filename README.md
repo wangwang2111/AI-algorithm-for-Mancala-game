@@ -21,7 +21,7 @@ And access: localhost:8000/mancala.html
 ## DQN model training
 To train dqn model:
 ```
-python ai/dqn.py
+python dqn.py
 ```
 
 Then, to access training results log:

@@ -1,6 +1,6 @@
 import torch
 import numpy as np
-from ai.dqn import DQNAgent  # assumes you placed DQNAgent in ai/dqn.py
+from dqn import DQNAgent
 from ai.rules import get_valid_moves
 
 class DQNWrapper:

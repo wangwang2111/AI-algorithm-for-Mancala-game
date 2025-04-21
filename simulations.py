@@ -67,7 +67,7 @@ _dqn_cache = {}
 
 def get_cached_dqn():
     if "agent" not in _dqn_cache:
-        _dqn_cache["agent"] = DQNWrapper('ai/save/policy_final.pt')
+        _dqn_cache["agent"] = DQNWrapper('save/policy_final.pt')
     return _dqn_cache["agent"]
 
 def simulate_game(player1_strategy, player2_strategy):

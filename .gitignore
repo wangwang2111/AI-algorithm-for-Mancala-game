@@ -9,6 +9,3 @@ __pycache__/
 
 # debug game's rules
 ai/debug_mancala_rules.py
-
-# logs of models' training
-runs/

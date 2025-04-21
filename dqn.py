@@ -9,6 +9,7 @@ from torch.utils.tensorboard import SummaryWriter
 
 from ai.rules import initialize_board, get_valid_moves, make_move, is_terminal
 from ai.minimax import simple_minimax
+from ai.advanced_heuristic import advanced_heuristic_minimax
 
 import os
 from datetime import datetime
@@ -45,14 +46,14 @@ OPPONENTS = ['random', 'minimax']
 
 # Reward shaping
 WIN_REWARD = 5.0               
-CAPTURE_BONUS = 0.7
+CAPTURE_BONUS = 0.8
 EXTRA_TURN_BONUS = 1.4
 STORE_DIFF_WEIGHT = 0.8
-REWARD_SCALE = 0.45
-POSITIONAL_ADV = 0.2
-POTENTIAL_CAPTURE_BONUS = 0.1
-POTENTIAL_EXTRA_TURN_BONUS = 0.1
-DEFENSIVE_MOVE_BONUS = 0.15
+REWARD_SCALE = 0.5
+POSITIONAL_ADV = 0.5
+POTENTIAL_CAPTURE_BONUS = 0.5
+POTENTIAL_EXTRA_TURN_BONUS = 0.5
+DEFENSIVE_MOVE_BONUS = 0.5
 
 # Device configuration
 device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
