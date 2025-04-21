@@ -9,7 +9,6 @@ from torch.utils.tensorboard import SummaryWriter
 
 from ai.rules import initialize_board, get_valid_moves, make_move, is_terminal
 from ai.minimax import simple_minimax
-from ai.advanced_heuristic import advanced_heuristic_minimax
 
 import os
 from datetime import datetime
@@ -32,8 +31,8 @@ BETA_FRAMES = 100000        # Steps to anneal beta to 1.0
 
 USE_DOUBLE_DQN = True
 # Network architecture
-HIDDEN_UNITS = [128, 64, 32]     # Layer sizes
-# HIDDEN_UNITS = [64, 64, 32]     # Layer sizes
+# HIDDEN_UNITS = [128, 64, 32]     # Layer sizes
+HIDDEN_UNITS = [64, 64, 32]     # Layer sizes
 DROPOUT_RATE = 0.1               # Dropout rate
 
 # Training reporting

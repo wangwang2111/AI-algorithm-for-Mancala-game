@@ -3,7 +3,6 @@ import random
 import time
 from itertools import product, permutations
 import pandas as pd
-import numpy as np
 
 from ai.rules import initialize_board, is_terminal, evaluate, get_valid_moves, make_move
 from ai.alpha_beta import minimax_alpha_beta
@@ -15,7 +14,7 @@ from dqn_wrapper import DQNWrapper
 from ai.MCTS import mcts_decide
 
 import multiprocessing as mp
-mp.set_start_method('spawn', force=True)  # Add this right after imports
+mp.set_start_method('spawn', force=True)  # This to enable multiprocessing with pytorch model
 
 def random_strategy(board, player):
     return random.choice(get_valid_moves(board, player))
@@ -53,11 +52,11 @@ def mcts_strategy(board, player):
 
 # Updated strategies list
 strategies = [
-    # {"name": "Random", "function": random_strategy},
-    # {"name": "Simple Minimax", "function": simple_minimax_strategy},
-    # {"name": "Minimax Alpha-Beta", "function": minimax_alpha_beta_strategy},
+    {"name": "Random", "function": random_strategy},
+    {"name": "Simple Minimax", "function": simple_minimax_strategy},
+    {"name": "Minimax Alpha-Beta", "function": minimax_alpha_beta_strategy},
     {"name": "Advanced Heuristic", "function": advanced_heuristic_strategy},
-    # {"name": "MCTS", "function": mcts_strategy},
+    {"name": "MCTS", "function": mcts_strategy},
     {"name": "DQN", "function": None},  # Placeholder, will be replaced per process
 ]
 
@@ -68,7 +67,7 @@ _dqn_cache = {}
 
 def get_cached_dqn():
     if "agent" not in _dqn_cache:
-        _dqn_cache["agent"] = DQNWrapper('ai/save/policy7.pt')
+        _dqn_cache["agent"] = DQNWrapper('ai/save/policy_final.pt')
     return _dqn_cache["agent"]
 
 def simulate_game(player1_strategy, player2_strategy):
