@@ -12,7 +12,6 @@ function playBackgroundSound() {
   }
 }
 
-
 // ui.js
 class MancalaUI {
   constructor() {
@@ -25,8 +24,7 @@ class MancalaUI {
 
     // Track which player the AI controls (0 for Player 1, 1 for Player 2)
     this.aiPlayer = 1; // Start with AI as Player 2
-    
-
+  
     
     // Add event listeners for AI controls
     document.getElementById('ai-algorithm').addEventListener('change', () => this.updateAISettings());
@@ -69,6 +67,7 @@ class MancalaUI {
     this.ai = new MancalaAI(this.getAISettings());
     console.log('AI Settings Updated:', this.getAISettings());
   }
+
 
   initializeEventListeners() {
     this.pits.forEach(pit => {
@@ -330,9 +329,11 @@ class MancalaUI {
     const p2 = this.game.board[13];
     
     if (p1 === p2) return "It's a Tie!";
-    if ((this.aiPlayer === 0 && p1 > p2) || (this.aiPlayer === 1 && p1 > p2)) {
+    if ((this.aiPlayer === 0 && p1 > p2) || (this.aiPlayer === 1 && p1 < p2)) {
       this.playGameOverSound();
-    } 
+    } else {
+      this.playVictorySound();
+    }
     return `${p1 > p2 ? (this.aiPlayer === 0 ? 'AI' : 'Player 1') : (this.aiPlayer === 1 ? 'AI' : 'Player 2')} Wins!`;
   }
 
@@ -349,7 +350,14 @@ class MancalaUI {
   playStoneSound() {
     const stoneSound = document.getElementById('stone-sound');
     stoneSound.currentTime = 0;
+    stoneSound.volume = 0.2;
     stoneSound.play();
+  }
+
+  playVictorySound() {
+    const victorySound = document.getElementById('victory-sound');
+    victorySound.currentTime = 0;
+    victorySound.play();
   }
 
   playGameOverSound() {
@@ -366,6 +374,9 @@ document.addEventListener('click', () => {
 
 document.getElementById('mute-button').addEventListener('click', () => {
   backgroundSound.muted = !backgroundSound.muted;
+  restartSound.muted = !restartSound.muted;
+  stoneSound.muted = !stoneSound.muted;
+  victorySound.muted = !victorySound.muted;
   document.getElementById('mute-button').innerText = backgroundSound.muted ? "🔇 Unmute" : "🔊 Mute";
 });
 

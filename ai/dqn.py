@@ -1,551 +1,654 @@
 import numpy as np
 import random
 from collections import deque
-import tensorflow as tf
-from tensorflow.keras.models import Model
-from tensorflow.keras.layers import Input, Dense
-from tensorflow.keras.optimizers import Adam
-from tensorflow.keras.callbacks import TensorBoard
-import copy
+import torch
+import torch.nn as nn
+import torch.optim as optim
+import torch.nn.functional as F
+from torch.utils.tensorboard import SummaryWriter
+
 from ai.rules import initialize_board, get_valid_moves, make_move, is_terminal
+from ai.minimax import simple_minimax
+from ai.advanced_heuristic import advanced_heuristic_minimax
 
-# GPU configuration
-gpus = tf.config.experimental.list_physical_devices('GPU')
-if gpus:
-    try:
-        for gpu in gpus:
-            tf.config.experimental.set_memory_growth(gpu, True)
-    except RuntimeError as e:
-        print(e)
+import os
+from datetime import datetime
+import math
 
+# ==================== HYPERPARAMETERS ====================
+# Training parameters
+BATCH_SIZE = 256
+GAMMA = 0.8                  # Discount factor
+EPS_START = 1              # Initial exploration rate
+EPS_END = 0.1               # Minimum exploration rate
+EPS_DECAY = 0.000003       # Decay rate for exploration
+MEMORY_SIZE = 10000000      # Replay buffer size
+LEARNING_RATE = 0.0001      # Learning rate
+TARGET_UPDATE_FREQ = 1000   # Steps between target network updates
+TAU = 0.015                 # Soft update parameter
+ALPHA = 0.6                 # Prioritization exponent
+BETA_START = 0.4            # Initial importance sampling weight
+BETA_FRAMES = 100000        # Steps to anneal beta to 1.0
+
+USE_DOUBLE_DQN = True
+# Network architecture
+HIDDEN_UNITS = [128, 64, 32]     # Layer sizes
+# HIDDEN_UNITS = [64, 64, 32]     # Layer sizes
+DROPOUT_RATE = 0.1               # Dropout rate
+
+# Training reporting
+REPORTING_PERIOD = 100          # Episodes between progress reports
+SAVE_FREQ = 1000                # Episodes between model saves
+
+# Opponent options
+# OPPONENTS = ['random']
+OPPONENTS = ['random', 'minimax']
+
+# Reward shaping
+WIN_REWARD = 5.0               
+CAPTURE_BONUS = 0.7
+EXTRA_TURN_BONUS = 1.4
+STORE_DIFF_WEIGHT = 0.8
+REWARD_SCALE = 0.45
+POSITIONAL_ADV = 0.2
+POTENTIAL_CAPTURE_BONUS = 0.1
+POTENTIAL_EXTRA_TURN_BONUS = 0.1
+DEFENSIVE_MOVE_BONUS = 0.15
+
+# Device configuration
+device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
+
+model_fn = os.path.join("save", f"policy7.pt")
+# ==================== HELPER FUNCTIONS ====================
 def opponent_player(current_player):
     """Utility function to determine the opponent of the given player."""
     return 'player_2' if current_player == 'player_1' else 'player_1'
 
+class SimpleMinimaxAgent:
+    def __init__(self, depth=3):
+        self.depth = depth
+
+    def select_action(self, board, player):
+        _, move = simple_minimax(board, self.depth, player, player)
+        return move
+
+class AdvancedHeuristicAgent:
+    def __init__(self, depth=3):
+        self.depth = depth
+
+    def select_action(self, board, player):
+        _, move = advanced_heuristic_minimax(board, 
+                                             self.depth,
+                                             alpha=-math.inf,
+                                             beta=math.inf, 
+                                             current_player=player, 
+                                             maximizing_for=player)
+        return move
+
+# ==================== PRIORITIZED REPLAY BUFFER ====================
 class PrioritizedReplayBuffer:
-    def __init__(self, capacity=10000, alpha=0.6):
+    def __init__(self, capacity=MEMORY_SIZE, alpha=ALPHA):
         self.capacity = capacity
         self.alpha = alpha
-        self.buffer = deque(maxlen=capacity)
-        self.priorities = deque(maxlen=capacity)
+        self.buffer = []
+        self.priorities = []
+        self.pos = 0
 
     def add(self, state, action, reward, next_state, done):
         max_priority = max(self.priorities) if self.buffer else 1.0
-        self.buffer.append((state, action, reward, next_state, done))
-        self.priorities.append(max_priority)
+        
+        if len(self.buffer) < self.capacity:
+            self.buffer.append((state, action, reward, next_state, done))
+            self.priorities.append(max_priority)
+        else:
+            self.buffer[self.pos] = (state, action, reward, next_state, done)
+            self.priorities[self.pos] = max_priority
+        
+        self.pos = (self.pos + 1) % self.capacity
 
-    def sample(self, batch_size, beta=0.4):
-        priorities = np.array(self.priorities) ** self.alpha
-        probs = priorities / priorities.sum()
+    def sample(self, batch_size, beta=BETA_START):
+        if len(self.buffer) == 0:
+            return [], [], []
+            
+        priorities = np.array(self.priorities)
+        probs = priorities ** self.alpha
+        probs /= probs.sum()
+        
         indices = np.random.choice(len(self.buffer), batch_size, p=probs)
         samples = [self.buffer[idx] for idx in indices]
+        
+        # Importance sampling weights
         weights = (len(self.buffer) * probs[indices]) ** (-beta)
         weights /= weights.max()
-        return samples, indices, np.array(weights)
+        
+        return samples, indices, np.array(weights, dtype=np.float32)
 
     def update_priorities(self, indices, priorities):
         for idx, priority in zip(indices, priorities):
             self.priorities[idx] = priority
 
+    def __len__(self):
+        return len(self.buffer)
+
+# ==================== DQN NETWORK ====================
+class DQN(nn.Module):
+    def __init__(self, input_size, output_size):
+        super(DQN, self).__init__()
+        self.layers = nn.ModuleList()
+        
+        # Input layer
+        self.layers.append(nn.Linear(input_size, HIDDEN_UNITS[0]))
+        self.layers.append(nn.ReLU())
+        self.layers.append(nn.Dropout(DROPOUT_RATE))
+        
+        # Hidden layers
+        for i in range(1, len(HIDDEN_UNITS)):
+            self.layers.append(nn.Linear(HIDDEN_UNITS[i-1], HIDDEN_UNITS[i]))
+            self.layers.append(nn.ReLU())
+            self.layers.append(nn.Dropout(DROPOUT_RATE))
+        
+        # Output layer
+        self.layers.append(nn.Linear(HIDDEN_UNITS[-1], output_size))
+
+    def forward(self, x):
+        for layer in self.layers:
+            x = layer(x)
+        return x
+
+# ==================== DQN AGENT ====================
 class DQNAgent:
-    def __init__(self, state_shape=(15,), action_size=6):
+    def __init__(self, state_shape=(29,), action_size=6):
         self.state_shape = state_shape
         self.action_size = action_size
-        self.memory = PrioritizedReplayBuffer(capacity=1000000)
-        self.gamma = 0.99
-        self.epsilon = 1.0
-        self.epsilon_decay = 0.9985
-        self.epsilon_min = 0.09
-        self.batch_size = 256
-        self.model = self._build_model()
-        self.target_model = self._build_model()
-        self.update_target_model()  # Initialize target network
-        self.tensorboard = TensorBoard(log_dir='./logs/dqn')
-        self.summary_writer = tf.summary.create_file_writer('./logs/dqn')
-        self.target_update_freq = 200
-        self.train_step = 0
-        self.tau = 0.005  # For soft updates (add this)
+        self.memory = PrioritizedReplayBuffer()
+        self.gamma = GAMMA
+        self.epsilon = EPS_START
+        self.epsilon_min = EPS_END
+        self.epsilon_decay = EPS_DECAY
+        self.batch_size = BATCH_SIZE
         
-    def _build_model(self):
-        inputs = Input(shape=self.state_shape)
-        x = Dense(512, activation='relu')(inputs)  # Increased from 256
-        x = tf.keras.layers.Dropout(0.3)(x)  # Increased from 0.2
-        x = Dense(256, activation='relu')(x)  # Additional layer
-        x = Dense(128, activation='relu')(x)
-        outputs = Dense(self.action_size, 
-                    activation='linear',
-                    kernel_initializer=tf.keras.initializers.RandomNormal(mean=1.0, stddev=0.5))(x)
-        model = Model(inputs=inputs, outputs=outputs)
-        model.compile(loss=tf.keras.losses.Huber(delta=0.2),  # Increased from 0.1
-                    optimizer=Adam(learning_rate=0.0003))  # Reduced from 0.0005
-        return model
-    
-    def update_target_model(self, tau=0.01):
+        # Networks
+        self.policy_net = DQN(state_shape[0], action_size).to(device)
+        self.target_net = DQN(state_shape[0], action_size).to(device)
+        self.target_net.load_state_dict(self.policy_net.state_dict())
+        self.target_net.eval()
+        
+        # Optimizer
+        self.optimizer = optim.Adam(self.policy_net.parameters(), lr=LEARNING_RATE)
+        
+        # Training tracking
+        self.train_step = 0
+        self.beta = BETA_START
+        self.beta_increment = (1.0 - BETA_START) / BETA_FRAMES
+        
+        # TensorBoard logging
+        self.writer = SummaryWriter()
+        self.current_phase = 1
+        # Opponent Pool
+        self.opponent_pool = []
+        for opponent_name in OPPONENTS:
+            if opponent_name == 'random':
+                self.opponent_pool.append('random')
+            elif opponent_name == 'minimax':
+                self.opponent_pool.append(SimpleMinimaxAgent(depth=3))
+            elif opponent_name == 'advanced_heuristic':
+                self.opponent_pool.append(AdvancedHeuristicAgent(depth=3))
+        
+        self.manual_epsilon_override = False
+
+    def update_target_model(self):
         """Soft update target network weights."""
-        q_weights = self.model.get_weights()
-        target_weights = self.target_model.get_weights()
-        self.target_model.set_weights([tau * w + (1 - tau) * tw for w, tw in zip(q_weights, target_weights)])
+        target_net_state_dict = self.target_net.state_dict()
+        policy_net_state_dict = self.policy_net.state_dict()
+        for key in policy_net_state_dict:
+            target_net_state_dict[key] = policy_net_state_dict[key]*TAU + target_net_state_dict[key]*(1-TAU)
+        self.target_net.load_state_dict(target_net_state_dict)
 
     def remember(self, state, action, reward, next_state, done):
         self.memory.add(state, action, reward, next_state, done)
 
-    def get_action(self, state, valid_moves):
-        if not valid_moves:  # No valid moves available
-            return None
-            
-        if np.random.rand() <= self.epsilon:  # Exploration
-            return random.choice(valid_moves)  # Only choose valid moves
+    def get_action(self, state, valid_moves, greedy=False):
+        """Select an action using epsilon-greedy policy over valid moves."""
+        if not greedy and np.random.rand() <= self.epsilon:
+            return random.choice(valid_moves)
         
-        # Exploitation with masking
-        q_values = self.model.predict(state[np.newaxis, ...], verbose=0)[0]
-        masked_q = np.full_like(q_values, -np.inf)
-        masked_q[valid_moves] = q_values[valid_moves]  # Only consider valid moves
+        with torch.no_grad():
+            state_tensor = torch.FloatTensor(state).unsqueeze(0).to(device)
+            q_values = self.policy_net(state_tensor).cpu().numpy()[0]
+        
+        # Mask invalid moves
+        masked_q = np.full(6, -np.inf)
+        for move in valid_moves:
+            pit_index = move if move < 6 else move - 7
+            masked_q[pit_index] = q_values[pit_index]
         
         return np.argmax(masked_q)
-        
+    
     def replay(self):
-        if len(self.memory.buffer) < self.batch_size:
+        if len(self.memory) < self.batch_size:
             return None
 
         self.train_step += 1
-        # Sample with annealed beta value
-        samples, indices, weights = self.memory.sample(
-            self.batch_size,
-            beta=min(0.4 + self.train_step / 100000, 1.0)
-        )
+        self.beta = min(1.0, self.beta + self.beta_increment)
         
-        states = np.array([sample[0] for sample in samples])
-        actions = np.array([sample[1] for sample in samples])
-        rewards = np.array([sample[2] for sample in samples])
-        next_states = np.array([sample[3] for sample in samples])
-        dones = np.array([sample[4] for sample in samples])
+        # Sample from prioritized replay buffer
+        samples, indices, weights = self.memory.sample(self.batch_size, self.beta)
+        
+        # Convert to tensors
+        states = torch.FloatTensor(np.array([sample[0] for sample in samples])).to(device)
+        actions = torch.LongTensor(np.array([sample[1] for sample in samples])).to(device)
+        rewards = torch.FloatTensor(np.array([sample[2] for sample in samples])).to(device)
+        next_states = torch.FloatTensor(np.array([sample[3] for sample in samples])).to(device)
+        dones = torch.FloatTensor(np.array([sample[4] for sample in samples])).to(device)
+        weights = torch.FloatTensor(weights).to(device)
 
-        # Single forward pass for all predictions
-        current_predictions = self.model.predict(states, verbose=0)
-        current_q = self.model.predict(next_states, verbose=0)
-        target_q = self.target_model.predict(next_states, verbose=0)
+        # Compute Q(s_t, a) - the model computes Q(s_t), then we select the columns of actions taken
+        current_q_values = self.policy_net(states).gather(1, actions.unsqueeze(1))
         
-        batch_index = np.arange(self.batch_size, dtype=np.int32)
-        best_next_actions = np.argmax(current_q, axis=1)
-        
-        # Compute targets and advantages together
-        targets = current_predictions.copy()
-        td_targets = rewards + self.gamma * target_q[batch_index, best_next_actions] * (1 - dones)
-        targets[batch_index, actions] = td_targets
-        
-        # Advantage calculation
-        selected_actions_values = current_predictions[batch_index, actions]
-        advantages = td_targets - selected_actions_values
+        # Compute V(s_{t+1}) for all next states
+        with torch.no_grad():
+            # Double DQN: use policy net to select actions, target net to evaluate
+            if USE_DOUBLE_DQN:
+                next_actions = self.policy_net(next_states).max(1)[1].unsqueeze(1)
+                next_q_values = self.target_net(next_states).gather(1, next_actions)
+            else:
+                next_q_values = self.target_net(next_states).max(1)[0].unsqueeze(1)
+            expected_q_values = rewards + (1 - dones) * self.gamma * next_q_values
 
-        # Train model
-        history = self.model.fit(
-            states, 
-            targets, 
-            batch_size=self.batch_size, 
-            sample_weight=weights, 
-            verbose=0, 
-            callbacks=[self.tensorboard]
-        )
+        # Compute Huber loss
+        loss = F.smooth_l1_loss(current_q_values, expected_q_values, reduction='none')
+        loss = (weights * loss).mean()
         
-        # Update priorities
-        errors = np.abs(advantages)  # Using advantages as TD errors
-        self.memory.update_priorities(indices, errors)
+        # Optimize the model
+        self.optimizer.zero_grad()
+        loss.backward()
         
-        # Logging
-        with self.summary_writer.as_default():
-            tf.summary.histogram("advantages", advantages, step=self.train_step)
-            tf.summary.scalar("avg_advantage", np.mean(advantages), step=self.train_step)
-            tf.summary.scalar("max_q_value", np.max(current_predictions), step=self.train_step)
-
-        if self.train_step % self.target_update_freq == 0:
-            self.update_target_model()
-            print(f"Updated target network at step {self.train_step}")
-
-        if self.epsilon > self.epsilon_min:
-            self.epsilon *= self.epsilon_decay
-
-        return history.history['loss'][0]
-
-    def preprocess_state(self, board, current_player, agent_player):
-        """
-        Preprocess the board state into a consistent 14-length vector (normalized 0-1).
-        The state always represents the board from the agent's perspective.
-        """
-        # Normalize all values by dividing by max possible stones
-        p1_pits = np.array(board['player_1'][:6]) / 24.0  # Max 4*6=24 stones in pits
-        p1_store = board['player_1'][6] / 48.0  # Max 48 stones in store
-        p2_pits = np.array(board['player_2'][:6]) / 24.0
-        p2_store = board['player_2'][6] / 48.0
-        
-        if agent_player == 'player_1':
-            # Agent is player_1 - state is [p1_pits, p1_store, p2_pits, p2_store, turn_indicator]
-            turn_indicator = 1.0 if current_player == 'player_1' else -1.0
-            return np.concatenate([p1_pits, [p1_store], p2_pits, [p2_store], [turn_indicator]])
-        else:
-            # Agent is player_2 - rotate perspective so agent's pits come first
-            turn_indicator = 1.0 if current_player == 'player_2' else -1.0
-            return np.concatenate([p2_pits, [p2_store], p1_pits, [p1_store], [turn_indicator]])
-
-    def _rules_based_opponent(self, board, current_player):
-        """
-        A simple rules-based opponent. It first looks for a move that grants an extra turn,
-        then looks for a capturing move, and finally selects the move with the most seeds.
-        """
-        valid_moves = get_valid_moves(board, current_player)
-        for move in valid_moves:
-            stones = board[current_player][move]
-            if (move + stones) % 14 == 6:
-                return move
-        for move in valid_moves:
-            stones = board[current_player][move]
-            landing_pit = (move + stones) % 14
-            if landing_pit < 6 and board[current_player][landing_pit] == 1:
-                opp = opponent_player(current_player)
-                if board[opp][5 - landing_pit] > 0:
-                    return move
-        return max(valid_moves, key=lambda x: board[current_player][x])
-    
-    def evaluate(self, test_env, test_games=20, opponent='rules'):
-        """
-        Evaluate the agent against a specified opponent type.
-        Tests both player_1 and player_2 perspectives for balanced evaluation.
-        
-        Returns:
-            avg_reward: Average reward per game
-            win_rate: Percentage of games won
-            avg_moves: Average moves per game
-        """
-        original_epsilon = self.epsilon
-        self.epsilon = 0  # Use greedy policy for evaluation
-        
-        metrics = {
-            'wins': 0,
-            'losses': 0,
-            'ties': 0,
-            'total_reward': 0,
-            'total_moves': 0,
-            'store_diffs': []
-        }
-        
-        
-        # Test both player perspectives
-        for agent_player in ['player_1', 'player_2']:
-            test_env.agent_player = agent_player
-            test_env.opponent_player = 'player_2' if agent_player == 'player_1' else 'player_1'
+        # Gradient clipping
+        for param in self.policy_net.parameters():
+            param.grad.data.clamp_(-1, 1)
             
-            for _ in range(test_games // 2):  # Split games between perspectives
-                test_env.reset()
-                state = self.preprocess_state(test_env.board, test_env.current_player, test_env.agent_player)
+        self.optimizer.step()
+        
+        # Update priorities based on TD errors
+        with torch.no_grad():
+            td_errors = (expected_q_values - current_q_values).abs().cpu().numpy().flatten()
+        self.memory.update_priorities(indices, td_errors)
+        
+        if self.train_step % TARGET_UPDATE_FREQ == 0:
+            self.update_target_model()
+            
+        return loss.item()
+
+    def preprocess_state(self, board, current_player):
+        """Efficient state representation with 29 features."""
+        p1_pits = np.array(board['player_1'][:6])
+        p1_store = board['player_1'][6]
+        p2_pits = np.array(board['player_2'][:6])
+        p2_store = board['player_2'][6]
+        
+        # Normalized features
+        features = [
+            # Player 1 perspective (normalized)
+            *(p1_pits / 24.0),  # 6 features
+            p1_store / 48.0,     # 1 feature
+            
+            # Player 2 perspective (normalized)
+            *(p2_pits / 24.0),   # 6 features
+            p2_store / 48.0,     # 1 feature
+            
+            # Relative differences
+            *(p1_pits - p2_pits) / 24.0,  # 6 features
+            (p1_store - p2_store) / 48.0, # 1 feature
+            
+            # Turn information
+            1.0 if current_player == 'player_1' else 0.0,
+            1.0 if current_player == 'player_2' else 0.0,
+            
+            # Game phase indicator
+            min(1.0, (p1_store + p2_store) / 30.0),
+            
+            # Strategic features
+            sum(p1_pits) / 24.0,
+            sum(p2_pits) / 24.0,
+            float(any(p == 0 for p in p1_pits)),
+            float(any(p == 0 for p in p2_pits)),
+            1.0  # Bias term
+        ]
+        
+        return np.array(features, dtype=np.float32)
+
+    # ==================== MAIN TRAINING LOOP ====================
+    def train(self, env):
+        """Continuous training loop with win rate tracking."""
+        best_win_rate = -np.inf
+        wins_agent = 0
+        wins_opponent = 0
+        episode = 0
+        total_batches_trained = 0  # Track total batches trained
+        stored_episodes = 0
+        episode_durations = deque(maxlen=REPORTING_PERIOD)
+        episode_rewards = deque(maxlen=REPORTING_PERIOD)
+        losses = deque(maxlen=REPORTING_PERIOD)
+        
+        try:
+            while True:
+                if episode == 8000 and self.current_phase == 0:
+                    print("Switching to phase 2")
+                    self.current_phase += 1
+                    if self.epsilon < 0.5:
+                        self.manual_epsilon_override = True
+                        print(f"Epsilon manually increased by .2 at episode {episode}")
+                    
+                if episode == 16000 and self.current_phase == 1:
+                    print("Switching to phase 3")
+                    self.current_phase += 1
+                    if self.epsilon < 0.5:
+                        self.manual_epsilon_override = True
+                    # self.opponent_pool = []
+                    # self.opponent_pool.append('random')
+                    # self.opponent_pool.append(SimpleMinimaxAgent(depth=3))
+                    
+                state = env.reset()
+                state = self.preprocess_state(env.board, env.current_player)
                 done = False
-                game_moves = 0
-                game_reward = 0
+                total_reward = 0
+                steps = 0
                 
                 while not done:
-                    game_moves += 1
-                    valid_moves = test_env.get_valid_moves(test_env.current_player)
-                    
-                    if test_env.current_player == test_env.agent_player:
+                    steps += 1
+                    if env.current_player == env.agent_player:
+                        valid_moves = env.get_valid_moves(env.current_player)
                         action = self.get_action(state, valid_moves)
-                        _, reward, done = test_env.step(action)
-                        game_reward += reward
-                    else:
-                        if opponent == 'random':
-                            action = random.choice(valid_moves)
-                        elif opponent == 'rules':
-                            action = self._rules_based_opponent(test_env.board, test_env.current_player)
-                        _, _, done = test_env.step(action)
-                    
-                    state = self.preprocess_state(test_env.board, test_env.current_player, test_env.agent_player)
-                    
-                    # In evaluate(), add tie handling:
-                    if done:
-                        store_diff = test_env.board[test_env.agent_player][6] - test_env.board[test_env.opponent_player][6]
-                        metrics['store_diffs'].append(store_diff)
-                        metrics['total_reward'] += game_reward / game_moves
-                        metrics['total_moves'] += game_moves
-                        
-                        if store_diff > 0:
-                            metrics['wins'] += 1
-                        elif store_diff < 0:
-                            metrics['losses'] += 1
-                        else:
-                            metrics['ties'] += 1
-        
-        self.epsilon = original_epsilon
-        # In your training loop:
-        # avg_rewards = metrics['total_reward'] / test_games
-        # rewards = (avg_rewards - np.mean(avg_rewards)) / (np.std(avg_rewards) + 1e-8)
-        return {
-            'win_rate': metrics['wins'] / test_games,
-            'avg_reward': metrics['total_reward'] / test_games,
-            'avg_moves': metrics['total_moves'] / test_games,
-            'avg_store_diff': np.mean(metrics['store_diffs']),
-            'std_store_diff': np.std(metrics['store_diffs'])
-        }
-
-    def train(self, env, episodes=1000, early_stop=True):
-        """
-        Training loop for the DQNAgent with early stopping capabilities.
-        """
-        win_rates = []
-        avg_rewards = []
-        avg_moves = []
-        best_win_rate = -np.inf
-        no_improvement_count = 0
-        patience = 200         # Episodes to wait before stopping
-        plateau_window = 25    # Window for reward plateau detection
-        min_improvement = 0.01 # Minimum win rate improvement
-        
-        test_env = MancalaEnv(agent_player='player_1')
-        
-        for e in range(episodes):
-            # Alternate between random and rules-based opponents every 10 episodes
-            # opponent_type = 'random' if (e // 25) % 2 == 0 else 'rules'  # Slower alternation
-            # Dynamic opponent scheduling
-            if e < episodes//3:
-                opponent_type = 'random'  # Start with random opponent
-            elif e < 2*episodes//3:
-                opponent_type = 'random' if e % 20 < 10 else 'rules'  # Mixed phase
-            else:
-                opponent_type = 'rules'  # Final phase against rules
-    
-        
-            state = env.reset()
-            state = self.preprocess_state(env.board, env.current_player, env.agent_player)
-            done = False
-            total_reward = 0
-            
-            while not done:
-                if env.current_player == env.agent_player:
-                    valid_moves = env.get_valid_moves(env.current_player)
-                    action = self.get_action(state, valid_moves)
-                    _, reward, done = env.step(action)
-                    next_state = self.preprocess_state(env.board, env.current_player, env.agent_player)
-                    self.remember(state, action, reward, next_state, done)
-                    loss = self.replay()
-                    total_reward += reward
-                    state = next_state
-                else:
-                    valid_moves = env.get_valid_moves(env.current_player)
-                    if opponent_type == 'random':
-                        action = random.choice(valid_moves)
-                    else:
-                        action = self._rules_based_opponent(env.board, env.current_player)
-                    
-                    _, _, done = env.step(action)
-                    state = self.preprocess_state(env.board, env.current_player, env.agent_player)
-                
-                if done:
-                    print(f"Episode {e+1} - Epsilon: {self.epsilon:.3f} - Reward: {reward:.2f}, Store diff: {env.board[env.agent_player][6] - env.board[env.opponent_player][6]}")
-                    if e % 100 == 0:
-                        env.agent_player = 'player_2' if env.agent_player == 'player_1' else 'player_1'
-                        env.opponent_player = 'player_2' if env.agent_player == 'player_1' else 'player_1'
-                    
-                    if e % 10 == 0:
-                        q_values = self.model.predict(state[np.newaxis, ...], verbose=0)[0]
-                        sample_state = np.zeros((1, self.state_shape[0]))  # Zero state
-                        print("Initial Q-values:", self.model.predict(sample_state, verbose=0))
-                        
-                        random_state = np.random.rand(1, self.state_shape[0])
-                        print("Random state Q-values:", self.model.predict(random_state, verbose=0))
-                    
-                    if e % 15 == 0 or e == episodes - 1:
-                                                # Evaluate against both opponents
-                        rules_metrics = self.evaluate(test_env, test_games=25, opponent='rules')
-                        random_metrics = self.evaluate(test_env, test_games=40, opponent='random')
-
-                        # Store metrics for tracking
-                        avg_rewards.append(random_metrics['avg_reward'])
-                        win_rates.append(random_metrics['win_rate'])
-                        avg_moves.append(random_metrics['avg_moves'])
-
-                        print(f"Evaluation Episode {e+1}:")
-                        print(f"  Vs Random: WR {random_metrics['win_rate']:.2%} | Avg Reward: {random_metrics['avg_reward']:.2f} | Avg Moves: {random_metrics['avg_moves']:.1f}")
-                        print(f"  Vs Rules: WR {rules_metrics['win_rate']:.2%} | Avg Store Diff: {rules_metrics['avg_store_diff']:.1f} ± {rules_metrics['std_store_diff']:.1f}")
-
-                        # Calculate policy entropy
-                        probs = tf.nn.softmax(q_values)
-                        entropy = -tf.reduce_sum(probs * tf.math.log(probs + 1e-10))  # Added epsilon for numerical stability
-
-                        # Log to TensorBoard
-                        with self.summary_writer.as_default():
-                            tf.summary.scalar('epsilon', self.epsilon, step=e)
-                            tf.summary.scalar('win_rate/random', random_metrics['win_rate'], step=e)
-                            tf.summary.scalar('win_rate/rules', rules_metrics['win_rate'], step=e)
-                            tf.summary.scalar('avg_reward', random_metrics['avg_reward'], step=e)
-                            tf.summary.scalar('avg_store_diff', rules_metrics['avg_store_diff'], step=e)
-                            tf.summary.scalar('max_q_value', np.max(q_values), step=e)
-                            tf.summary.scalar('min_q_value', np.min(q_values), step=e)
-                            tf.summary.scalar("policy_entropy", entropy, step=e)
-                            tf.summary.scalar("avg_game_length", random_metrics['avg_moves'], step=e)
-
-                        print(f"Training Loss: {loss if loss is not None else 0:.4f} | Policy Entropy: {entropy:.3f}")
-
-                        if early_stop:
-                            # Use rules-based win rate for early stopping (more meaningful metric)
-                            current_win_rate = rules_metrics['win_rate']
-                            
-                            if current_win_rate >= 0.95:  # Slightly more reasonable target than 0.98
-                                print(f"Early stopping: Reached {current_win_rate:.0%} win rate against rules-based opponent")
-                                self.save_model("mancala_dqn_final.h5")
-                                return win_rates, avg_rewards
-                            
-                            if current_win_rate > best_win_rate + min_improvement:
-                                best_win_rate = current_win_rate
-                                no_improvement_count = 0
-                                self.save_model("mancala_dqn_best.h5")
-                                print(f"New best model saved with {current_win_rate:.2%} win rate")
+                        _, reward, done = env.step(action, current_phase=self.current_phase)
+                        next_state = self.preprocess_state(env.board, env.current_player)
+                        self.remember(state, action, reward, next_state, done)
+                        loss = self.replay()
+                        if loss is not None:  # Only count if a batch was trained
+                            total_batches_trained += 1
+                            # Update epsilon based on training steps
+                            if not self.manual_epsilon_override:
+                                if self.epsilon > self.epsilon_min:
+                                    self.epsilon = EPS_END + (EPS_START - EPS_END) * \
+                                                    math.exp(-1. * self.train_step * EPS_DECAY)
                             else:
-                                no_improvement_count += 1
-                                if no_improvement_count >= patience:
-                                    print(f"Early stopping: No improvement for {patience} evaluations")
-                                    self.save_model("mancala_dqn_final.h5")
-                                    return win_rates, avg_rewards
-                            
-                            # if no_improvement_count >= patience:
-                            #     print(f"Early stopping: No improvement for {patience} evaluations")
-                            #     self.save_model("mancala_dqn_final.h5")
-                            #     return win_rates, avg_rewards
-                            
-                            # if len(avg_rewards) >= plateau_window:
-                            #     recent_rewards = avg_rewards[-plateau_window:]
-                            #     if max(recent_rewards) - min(recent_rewards) < 0.5:
-                            #         print("Early stopping: Reward plateau detected")
-                            #         self.save_model("mancala_dqn_final.h5")
-                            #         return win_rates, avg_rewards
-                        # Add learning rate scheduling
-                    if e % 500 == 0:
-                        try:
-                            lr = self.model.optimizer.learning_rate.numpy()  # Correct way to get LR
-                            new_lr = lr * 0.9
-                            self.model.optimizer.learning_rate.assign(new_lr)
-                            print(f"Reduced learning rate from {lr:.6f} to {new_lr:.6f}")
-                        except:
-                            print("fail to reduce learning rate")
-                    break
-        
-        self.save_model("mancala_dqn_final.h5")
-        return win_rates, avg_rewards
+                                # Optional: Gradually decay epsilon again after manual increase
+                                if self.epsilon > self.epsilon_min:
+                                    self.epsilon = EPS_END + 0.2 + (EPS_START - EPS_END) * \
+                                                    math.exp(-1. * self.train_step * EPS_DECAY)
+                            losses.append(loss)
+                        total_reward += reward
+                        state = next_state
+                    else:
+                        valid_moves = env.get_valid_moves(env.current_player)
+                        opponent_agent = random.choice(self.opponent_pool)
+
+                        if opponent_agent == 'random':
+                            action = random.choice(valid_moves)
+                        else:
+                            action = opponent_agent.select_action(env.board, env.current_player)
+
+                        _, _, done = env.step(action, current_phase=self.current_phase)
+                        state = self.preprocess_state(env.board, env.current_player)
+                # Track metrics
+                episode_durations.append(steps)
+                episode_rewards.append(total_reward)
+                
+                # Track wins
+                if env.board[env.agent_player][6] > env.board[env.opponent_player][6]:
+                    wins_agent += 1
+                    stored_episodes += 1
+                elif random.random() < 0.1:  # Store some losing episodes
+                    stored_episodes += 1
+                elif env.board[env.agent_player][6] < env.board[env.opponent_player][6]:
+                    wins_opponent += 1
+                
+                # Report progress periodically
+                if episode % REPORTING_PERIOD == 0 and episode > 0:
+                    win_rate = wins_agent / REPORTING_PERIOD
+                    wins_opponent_rate = wins_opponent / REPORTING_PERIOD
+                    avg_reward = np.mean(episode_rewards)
+                    avg_duration = np.mean(episode_durations)
+                    avg_loss = np.mean(losses) if losses else 0
+                    memory_size = len(self.memory)
+                    
+                    print(f"\nOver the last {REPORTING_PERIOD} episodes:\n Episode {episode} | "
+                          f"Stored: {stored_episodes} |"
+                          f"Avg Reward: {avg_reward:.2f} | "
+                          f"Avg Duration: {avg_duration:.2f} | "
+                          f"Epsilon: {self.epsilon:.5f}\n"
+                          f"Agent: {win_rate:.2%} | Opponent: {wins_opponent_rate:.2%} | "
+                          f"Draw: {1-win_rate-(wins_opponent_rate):.2%} | \n"
+                          f"Total Batches Trained: {total_batches_trained} | "
+                          f"Replay Size: {memory_size}/{MEMORY_SIZE} | "
+                          f"Avg Training Loss: {avg_loss:.4f}")
+                    
+                    # Save best model
+                    if win_rate > best_win_rate:
+                        best_win_rate = win_rate
+                        self.save_model("save/mancala_dqn_best_7.pt")
+                        print(f"New best model saved with win rate: {best_win_rate:.2%}")
+                    
+                        
+                    # Log to TensorBoard
+                    self.writer.add_scalar("Exploration rate", self.epsilon, episode)
+                    self.writer.add_scalar("Episode duration", avg_duration, episode)
+                    self.writer.add_scalar("Win rate", win_rate, episode)
+                    self.writer.add_scalar("Reward earned by model",  avg_reward, episode),
+                    self.writer.add_scalar("Training loss", avg_loss, episode)
+                    
+                    # Reset counters for next reporting period
+                    wins_agent = 0
+                    wins_opponent = 0
+                    total_reward = 0
+                    episode_durations.clear()  # Reset for next period
+                    episode_rewards.clear()   # Reset for next period
+                    losses.clear()
+
+                # Save model periodically
+                if episode % SAVE_FREQ == 0 and episode > 0:
+                    print("Updating target net & saving checkpoint...")
+                    if os.path.isfile(model_fn):
+                        os.remove(model_fn)
+                    self.save_model(model_fn)
+                
+                episode += 1
+                
+        except KeyboardInterrupt:
+            print("\nTraining stopped by user. Saving final model...")
+            self.save_model(model_fn)
+            print(f"Best win rate achieved: {best_win_rate:.2%}")
+            print(f"Final metrics - "
+                  f"Total episodes: {episode} | "
+                  f"Stored episodes: {stored_episodes} | "
+                  f"Total batches: {total_batches_trained}")
 
     def save_model(self, filepath):
-        self.model.save(filepath)
+        torch.save({
+            'policy_state_dict': self.policy_net.state_dict(),
+            'target_state_dict': self.target_net.state_dict(),
+            'optimizer_state_dict': self.optimizer.state_dict(),
+            'epsilon': self.epsilon,
+            'train_step': self.train_step,
+            'beta': self.beta
+        }, filepath)
 
+    def load_model(self, filepath):
+        checkpoint = torch.load(filepath)
+        self.policy_net.load_state_dict(checkpoint['policy_state_dict'])
+        self.target_net.load_state_dict(checkpoint['target_state_dict'])
+        self.optimizer.load_state_dict(checkpoint['optimizer_state_dict'])
+        # self.epsilon = checkpoint['epsilon']
+        # self.train_step = checkpoint['train_step']
+        self.beta = checkpoint['beta']
+        self.policy_net.train()  # Set to training mode
+
+# ==================== MANCALA ENVIRONMENT ====================
 class MancalaEnv:
     def __init__(self, agent_player='player_1'):
         self.agent_player = agent_player
-        self.opponent_player = 'player_2' if agent_player == 'player_1' else 'player_1'
+        self.opponent_player = opponent_player(agent_player)
+        self.reward_scale = REWARD_SCALE
         self.reset()
+        
+    def _get_player_stones(self, player):
+        """Returns total stones in the player's store"""
+        return self.board[player][-1]  # Assuming last pit is the store
 
     def reset(self):
         self.board = initialize_board()
         self.current_player = 'player_1'
         return self.board
 
-    def step(self, action):
-        current_player_before = self.current_player
-        reward = self._calculate_reward(last_action=action) if current_player_before == self.agent_player else 0.0
+    def step(self, action, current_phase):
+        # --- Snapshot before move ---
+        pre_move_board = {
+            'player_1': self.board['player_1'].copy(),
+            'player_2': self.board['player_2'].copy()
+        }
+
+        # --- Execute move ---
         self.board, extra_turn = make_move(self.board, self.current_player, action)
-        if not extra_turn:
-            self.current_player = self.opponent_player if self.current_player == self.agent_player else self.agent_player
+
+        reward = 0.0
         done = is_terminal(self.board)
+
+        if self.current_player == self.agent_player:
+            # --- Initialize turn-based tracking if needed ---
+            if not hasattr(self, '_turn_start_store'):
+                self._turn_start_store = pre_move_board[self.agent_player][6]
+
+            # --- Calculate reward ---
+            reward = self._calculate_reward(action, extra_turn, pre_move_board, current_phase)
+
+            # --- If turn ends, finalize reward and cleanup ---
+            if not extra_turn:
+                del self._turn_start_store
+            else:
+                reward += 0.1
+
+        # --- Switch players unless extra turn ---
+        if not extra_turn:
+            self.current_player = opponent_player(self.current_player)
+
         return self.board, reward, done
+
 
     def get_valid_moves(self, player=None):
         player = player or self.current_player
         return get_valid_moves(self.board, player)
 
-    def _calculate_reward(self, last_action=None, done=False):
-        """Precision reward function with proper defensive/capture logic"""
-        if last_action is not None and self.board[self.agent_player][last_action] == 0:
-            return -25  # Invalid move penalty
-        
-        # 1. Simulate move first
-        if last_action is not None:
-            simulated_board, extra_turn = make_move(copy.deepcopy(self.board),
-                                            self.agent_player,
-                                            last_action)
-        else:
-            simulated_board = copy.deepcopy(self.board)
-            extra_turn = False
-            
-        my_store = simulated_board[self.agent_player][6]
-        opp_store = simulated_board[self.opponent_player][6]
-        store_diff = my_store - opp_store
-        
+    def _calculate_reward(self, action, extra_turn, pre_move_board, current_phase=1):
         reward = 0.0
-        defensive_bonus = 0.0
-        capture_threat = 0.0
+        my_pits = self.board[self.agent_player][:6]
+        opp_pits = self.board[self.opponent_player][:6]
+        my_store = self.board[self.agent_player][6]
+        opp_store = self.board[self.opponent_player][6]
+    
+        # 1. Store gain this turn
+        current_store = self.board[self.agent_player][6]
+        store_gain = (current_store - self._turn_start_store) /48.0
+        reward += store_gain * STORE_DIFF_WEIGHT  # Tunable
 
-        # 1. Base store difference (normalized)
-        reward += 10.0 * (store_diff / 48.0) #(0-10)
+        # 2. Extra turn bonus
+        if extra_turn:
+            reward += EXTRA_TURN_BONUS
 
-        if last_action is not None:
-            stones = self.board[self.agent_player][last_action]
-            landing_pit = (last_action + stones) % 14
 
-            # CORRECTED CAPTURE LOGIC
-            if 0 <= landing_pit < 6:  # Landed in our side
-                # Valid capture requires:
-                # 1. Pit was empty before sowing
-                # 2. Opponent's opposite pit has stones
-                if ((self.board[self.agent_player][landing_pit] == 0 or
-                    self.board[self.agent_player][landing_pit] == self.board[self.agent_player][last_action]) and # in case landing pit = start pit
-                    self.board[self.opponent_player][5 - landing_pit] > 0):
+        # 4. Capture reward
+        stones = pre_move_board[self.agent_player][action]
+        landing_index = (action + stones) % 14
+        if 0 <= landing_index < 6:
+            my_pits_before = pre_move_board[self.agent_player][:6]
+            opp_pits_before = pre_move_board[self.opponent_player][:6]
+            opp_pit_index = 5 - landing_index
+            if (action + stones) < 6:
+                # Check if the landing pit was empty before and opponent had stones
+                if my_pits_before[landing_index] == 0 and opp_pits_before[opp_pit_index] > 0:
+                    captured = opp_pits_before[opp_pit_index]
+                    if captured > 0:
+                        reward += CAPTURE_BONUS * (captured+1)
+            elif (action + stones) > 13:
+                if my_pits_before[landing_index] == 0:
+                    captured = opp_pits_before[opp_pit_index]
+                    reward += CAPTURE_BONUS * (captured+1)
                     
-                    captured = self.board[self.opponent_player][5 - landing_pit]
-                    reward += 1.5 * captured
-
-            # DEFENSIVE MOVE DETECTION (NEW)
-            # Check opponent's potential captures we blocked
-            for opp_pit in range(6):
-                if self.board[self.opponent_player][opp_pit] == 0:
-                    continue  # Opponent can't move from empty pit
-                    
-                # Simulate opponent sowing from this pit
-                opp_stones = self.board[self.opponent_player][opp_pit]
-                opp_landing = (opp_pit + opp_stones) % 14
-                
-                if 0 <= (opp_pit + opp_stones) % 14 < 6:  # Lands in their own side
-                    # Would this create a capture threat?
-                    if ((self.board[self.opponent_player][opp_landing] == 0 or 
-                        self.board[self.opponent_player][opp_landing] == self.board[self.opponent_player][opp_pit]) and # in case landing pit = opp_pit
-                        (opp_pit + opp_stones) // 13 == 0 and # Check if the landing pit passed the opp_pit
-                        self.board[self.agent_player][5 - opp_landing] > 0):
-                        
-                        # Calculate how our move affected this threat
-                        if last_action == (5 - opp_landing):
-                            # We modified the threatened pit
-                            defensive_bonus += (0.75 * stones)
-                        if landing_pit > 6 and landing_pit - 7 >= opp_landing:
-                            defensive_bonus += (0.75 * self.board[self.agent_player][5-opp_landing])
-                            
-
-            # Extra turn bonus
-            if (last_action + stones) % 14 == 6:
-                reward += 4.0
-
-        # 2. Apply defensive bonuses
-        reward += defensive_bonus
-
-        # 3. Terminal state rewards
-        if is_terminal(simulated_board):
+        # 3. Terminal game bonus
+        if is_terminal(self.board):
+            margin = (my_store - opp_store) / 48.0
             if my_store > opp_store:
-                reward += 20.0 + store_diff * 0.5
+                reward += WIN_REWARD + margin
+            elif my_store < opp_store:
+                reward -= WIN_REWARD - abs(margin)
             else:
-                reward += -15.0 + (store_diff * 0.4)
+                reward -= 1.0  # Draw
+                
+        game_phase = (my_store + opp_store) / 48.0  # 0=early, 1=late
+        
+        score_diff = (my_store - opp_store) / 48.0
+        
+        reward += score_diff * 2.0 * game_phase
+        
+        if current_phase == 1:
+            return reward
+            
+        # 5. Heuristic: Potential captures
+        my_pits = self.board[self.agent_player][:6]
+        opp_pits = self.board[self.opponent_player][:6]
+        capture_potential = sum(
+            opp_pits[5 - i] > 0 and my_pits[i] == 0
+            for i in range(6)
+        )
+        reward += POTENTIAL_CAPTURE_BONUS * capture_potential
 
-        # 4. Progressive game phase bonus
-        game_phase = (my_store + opp_store) / 48.0
-        if game_phase > 0.7 and store_diff > 0:
-            reward += 2.0 * game_phase * (store_diff / 24.0)
+        # 6. Heuristic: Potential extra turns
+        potential_extra = sum(
+            my_pits[i] == (6 - i)
+            for i in range(6)
+        )
+        reward += POTENTIAL_EXTRA_TURN_BONUS * potential_extra
+        
+        if current_phase == 2:
+            return reward
+        
+        # 7. Seed Conservation (don't empty pits unless beneficial)
+        stones_moved = pre_move_board[self.agent_player][action]
+        if pre_move_board[self.agent_player][action] == stones_moved:  # Empties the pit
+            if landing_index != 6:  # Only penalize if not landing in store
+                reward -= 0.2
+        
+        # 8. Tempo Control (large moves create complex distributions)
+        if stones_moved > 10:
+            reward += 0.5
+        
+        vulnerable_pits = 0
+        
+        # 9. Punish for potential opponent captures
+        for i in range(6): 
+            if my_pits[i] > 0 and opp_pits[5 - i] == 0:
+                for j in range(5-i):
+                    if opp_pits[j] + j == 5 - i:
+                        vulnerable_pits += 1
+                    
+        reward -= 0.5 * vulnerable_pits
+        
+        if current_phase == 3:
+            return reward
 
-        reward = np.tanh(reward) *5
-        return reward
 
 if __name__ == "__main__":
     env = MancalaEnv(agent_player='player_1')
-    agent = DQNAgent(state_shape=(15,))
-    print("Starting training...")
-    agent.train(env, episodes=5000)
-    agent.save_model("mancala_dqn_improved.h5")
-    print("Training completed. Model saved.")
+    agent = DQNAgent(state_shape=(29,))
+    
+    # Load existing model if available
+    try:
+        agent.load_model(model_fn)
+        print("Loaded existing model weights")
+    except Exception as e:
+        print(f"Warning: Could not load model due to {e}. Starting fresh.")
+    
+    print("Starting training... Press Ctrl+C to stop.")
+    print(f"Progress will be reported every {REPORTING_PERIOD} episodes")
+    print(f"Models will be saved every {SAVE_FREQ} episodes")
+    print(f"TensorBoard logs available in 'runs' directory")
+    
+    agent.train(env)

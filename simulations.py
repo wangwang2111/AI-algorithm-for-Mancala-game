@@ -11,19 +11,11 @@ from ai.minimax import simple_minimax
 from ai.advanced_heuristic import advanced_heuristic_minimax
 from ai.MCTS import mcts_decide
 from concurrent.futures import ProcessPoolExecutor
-from ai.dqn import DQNAgent, MancalaEnv
-from ai.A3C import A3CAgent  # Import the A3C agent
-from multiprocessing import cpu_count
-from tensorflow.keras.models import load_model
-from server import preprocess_state_for_a3c  # At top of simulations.py
+from dqn_wrapper import DQNWrapper
+from ai.MCTS import mcts_decide
 
-# Load DQN model
-dqn_agent = DQNAgent()
-dqn_agent.model.load_weights("models/mancala_dqn_best.h5")
-
-# Load A3C model
-# a3c_model = load_model('models/mancala_a3c_final.h5', compile=False)  # Load A3C model
-
+import multiprocessing as mp
+mp.set_start_method('spawn', force=True)  # Add this right after imports
 
 def random_strategy(board, player):
     return random.choice(get_valid_moves(board, player))
@@ -55,75 +47,43 @@ def advanced_heuristic_strategy(board, player):
         current_player=player,
         maximizing_for=player,
     )[1]
-
+    
 def mcts_strategy(board, player):
-        return mcts_decide(board, player)
-    
-def dqn_strategy(board, player):
-    state = np.array(board["player_1"][:6] + [board["player_1"][6]] + board["player_2"][:6] + [board["player_2"][6]])
-    valid_moves = get_valid_moves(board, player)
-    return dqn_agent.get_action(state, valid_moves)
-    
-def a3c_strategy(board, player):
-    # env = MancalaEnv(agent_player=player)  # Create an environment for preprocessing
-    # state = a3c_agent.preprocess_state(board, player)
+    return mcts_decide(board, player)
 
-    # Preprocess state
-    state = preprocess_state_for_a3c(board, player, player)  # Pass player as agent_player
-    
-    # Get valid moves
-    valid_moves = get_valid_moves(board, player)
-    # Get policy and value from model
-    policy, _ = a3c_model.predict(state[np.newaxis, ...], verbose=0)
-    policy = policy[0]  # Remove batch dimension
-    
-    # Create mask for valid moves (0-5 for pits)
-    valid_mask = np.zeros(6, dtype=bool)  # Assuming 6 actions (pits 0-5)
-    for move in valid_moves:
-        pit_index = move if move < 6 else move - 7  # Convert to 0-5 index
-        valid_mask[pit_index] = True
-    
-    # Apply mask and renormalize
-    masked_policy = policy.copy()
-    masked_policy[~valid_mask] = 0  # Zero out invalid moves
-    
-    # Check if we have any valid probabilities left
-    if np.sum(masked_policy) <= 0:
-        # If all zeros (shouldn't happen with exploration), fall back to uniform
-        masked_policy[valid_mask] = 1.0 / np.sum(valid_mask)
-    else:
-        # Normalize valid probabilities
-        masked_policy = masked_policy / np.sum(masked_policy)
-    
-    # Sample action
-    action = np.random.choice(6, p=masked_policy)
-    
-    # Convert back to move format if needed (0-5 for pits, 7-12 for stores)
-    return action if action in valid_moves else None
-    
-    # except Exception as e:
-    #     print(f"Error in a3c_get_move: {str(e)}")
-    #     valid_moves = get_valid_moves(board, player)
-    #     return random.choice(valid_moves) if valid_moves else None
-
+# Updated strategies list
 strategies = [
-    # {"name": "A3C", "function": a3c_strategy},
-    {"name": "Random", "function": random_strategy},
-    {"name": "Simple Minimax", "function": simple_minimax_strategy},
-    {"name": "Minimax Alpha-Beta", "function": minimax_alpha_beta_strategy},
+    # {"name": "Random", "function": random_strategy},
+    # {"name": "Simple Minimax", "function": simple_minimax_strategy},
+    # {"name": "Minimax Alpha-Beta", "function": minimax_alpha_beta_strategy},
     {"name": "Advanced Heuristic", "function": advanced_heuristic_strategy},
-    {"name": "MCTS", "function": mcts_strategy},
-    # {"name": "DQN", "function": dqn_strategy},
+    # {"name": "MCTS", "function": mcts_strategy},
+    {"name": "DQN", "function": None},  # Placeholder, will be replaced per process
 ]
+
+# Global cache per process
+# The model is only loaded once per process
+# avoid race conditions or bad sharing between processes
+_dqn_cache = {}
+
+def get_cached_dqn():
+    if "agent" not in _dqn_cache:
+        _dqn_cache["agent"] = DQNWrapper('ai/save/policy7.pt')
+    return _dqn_cache["agent"]
 
 def simulate_game(player1_strategy, player2_strategy):
     """Simulate a game between two strategies."""
+    if player1_strategy["name"] == "DQN":
+        player1_strategy["function"] = get_cached_dqn()
+    if player2_strategy["name"] == "DQN":
+        player2_strategy["function"] = get_cached_dqn()
+        
     start_time = time.time()
     board = initialize_board()
     # Randomly select which player starts the game
     current_player = "player_1"
     moves_count = 0
-    
+
     while not is_terminal(board):
         if current_player == "player_1":
             move = player1_strategy["function"](board, current_player)
@@ -203,25 +163,26 @@ def run_comprehensive_simulations(num_games=1000):
     """Run simulations where one player is always MCTS and the other is any other strategy."""
     results = []
     
-    # dqn_strategy = next(s for s in strategies if s["name"] == "DQN")
+    # selected_strategy = next(s for s in strategies if s["name"] == "DQN")
     # other_strategies = [s for s in strategies if s["name"] != "DQN"]
     
-    # # Create all combinations where one player is MCTS and the other is any other strategy
-    combinations = []
+    # # Create all combinations where one player is  and the other is any other strategy
+    # combinations = []
     # for strategy in other_strategies:
-    #     combinations.append((dqn_strategy, strategy))  # MCTS as player1
-    #     combinations.append((strategy, dqn_strategy))  # MCTS as player2
-    # Create every combination (Cartesian product) of strategies
+    #     combinations.append((selected_strategy, strategy))
+        # combinations.append((strategy, selected_strategy))
+        # combinations.append((selected_strategy, selected_strategy))
+    
+    combinations = []
     combinations = list(product(strategies, strategies))
     
     print("Combinations: ", combinations)
     total_combinations = len(combinations)
-        # Memory check at game start
+    
+    # Memory check at game start
     import psutil
-    if psutil.virtual_memory().percent > 85:
+    if psutil.virtual_memory().percent > 90:
         raise MemoryError("High memory at game start")
-        # Reduce workers to half of available CPUs
-    # max_workers = max(1, cpu_count() // 2)
     
     # Master progress bar for all strategy pairs
     with tqdm(total=total_combinations, desc="Overall Progress") as overall_progress:
@@ -246,13 +207,12 @@ def run_comprehensive_simulations(num_games=1000):
     return results
 
 if __name__ == "__main__":
-    simulation_results = run_comprehensive_simulations(num_games=1000)
+    simulation_results = run_comprehensive_simulations(num_games=100)
     df = pd.DataFrame(simulation_results)
-    df.to_csv("mancala_simulation_another_1000.csv", index=False)
+    df.to_csv("evaluation/_result_final.csv", index=False)
     
     print("\nSummary Statistics:")
-    print(df.groupby(['Player1_Strategy', 'Player2_Strategy']).agg({
-        'Time_Seconds': 'mean',
-        'Moves': 'median',
-        'Winner': lambda x: x.value_counts(normalize=True).get('Player2', 0)
-    }))
+    print(df.groupby(['Player1_Strategy', 'Player2_Strategy'])['Winner'] \
+                         .value_counts(normalize=True) \
+                         .unstack() \
+                         .fillna(0))

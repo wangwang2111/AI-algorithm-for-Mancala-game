@@ -53,48 +53,48 @@ class A3CAgent:
         
         return Model(inputs=inputs, outputs=[policy, value])
 
-    # def _calculate_reward(self, board, last_action=None, done=False):
-    #     """Enhanced reward function"""
-    #     my_store = board[self.env.agent_player][6]
-    #     opp_store = board[self.env.opponent_player][6]
-    #     store_diff = my_store - opp_store
+    def _calculate_reward(self, board, last_action=None, done=False):
+        """Enhanced reward function"""
+        my_store = board[self.env.agent_player][6]
+        opp_store = board[self.env.opponent_player][6]
+        store_diff = my_store - opp_store
         
-    #     # Normalized components
-    #     norm_store_diff = store_diff / 48.0
-    #     norm_my_store = my_store / 48.0
+        # Normalized components
+        norm_store_diff = store_diff / 48.0
+        norm_my_store = my_store / 48.0
         
-    #     reward = 2.0 * norm_store_diff  # Base reward
+        reward = 2.0 * norm_store_diff  # Base reward
         
-    #     # Strategic bonuses
-    #     if last_action is not None:
-    #         stones = board[self.env.agent_player][last_action]
-    #         landing_pit = (last_action + stones) % 14
+        # Strategic bonuses
+        if last_action is not None:
+            stones = board[self.env.agent_player][last_action]
+            landing_pit = (last_action + stones) % 14
             
-    #         # Capture bonus
-    #         if 0 <= landing_pit < 6 and board[self.env.agent_player][landing_pit] == 1:
-    #             captured = board[self.env.opponent_player][5 - landing_pit]
-    #             reward += 1.5 + (0.25 * captured)
+            # Capture bonus
+            if 0 <= landing_pit < 6 and board[self.env.agent_player][landing_pit] == 1:
+                captured = board[self.env.opponent_player][5 - landing_pit]
+                reward += 1.5 + (0.25 * captured)
             
-    #         # Extra turn bonus
-    #         if (last_action + stones) % 14 == 6:
-    #             reward += 2.0
+            # Extra turn bonus
+            if (last_action + stones) % 14 == 6:
+                reward += 2.0
             
-    #         # Tempo bonus
-    #         if stones == (6 - last_action):
-    #             reward += 1.0
+            # Tempo bonus
+            if stones == (6 - last_action):
+                reward += 1.0
         
-    #     # Terminal rewards
-    #     if done:
-    #         if my_store > 24:  # Clear win
-    #             reward += 10.0
-    #         elif my_store > opp_store:  # Moderate win
-    #             reward += 5.0
-    #         elif my_store == opp_store:  # Tie
-    #             reward -= 2.0
-    #         else:  # Loss
-    #             reward -= 5.0
+        # Terminal rewards
+        if done:
+            if my_store > 24:  # Clear win
+                reward += 10.0
+            elif my_store > opp_store:  # Moderate win
+                reward += 5.0
+            elif my_store == opp_store:  # Tie
+                reward -= 2.0
+            else:  # Loss
+                reward -= 5.0
         
-    #     return np.clip(reward, -10.0, 15.0)
+        return np.clip(reward, -10.0, 15.0)
 
         
     def get_action(self, state, valid_moves):

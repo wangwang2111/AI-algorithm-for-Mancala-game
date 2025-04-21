@@ -18,7 +18,7 @@ app = Flask(__name__)
 CORS(app)
 
 # Load models (once at startup)
-dqn_model = load_model('models/mancala_dqn_best.h5', compile=False)
+# dqn_model = load_model('models/mancala_dqn_best.h5', compile=False)
 a3c_model = load_model('models/mancala_a3c_final.h5', compile=False)  # Load A3C model
 
 def js_to_python_board(js_board):
@@ -222,8 +222,8 @@ def get_ai_move():
             current_player=currentPlayer,
             maximizing_for=currentPlayer,
         )
-    elif ai_type == 'dqn':
-        best_move = dqn_get_move(python_board, dqn_model, currentPlayer)
+    # elif ai_type == 'dqn':
+    #     best_move = dqn_get_move(python_board, dqn_model, currentPlayer)
     elif ai_type == 'a3c':
         best_move = a3c_get_move(python_board, a3c_model, currentPlayer)
     elif ai_type == 'MCTS':

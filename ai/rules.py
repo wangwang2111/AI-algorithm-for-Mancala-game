@@ -63,7 +63,7 @@ def evaluate(board, current_player, last_move=None):
         
         # Check for captures in simulated board
         landing_pit = (last_move + stones) % 14
-        if landing_pit < 6 and simulated_board[current_player][landing_pit] == 1:
+        if landing_pit < 6 and simulated_board[current_player][landing_pit] == 0:
             opp_pit = 5 - landing_pit
             move_bonus += simulated_board[opponent][opp_pit] * 0.4
         
@@ -108,47 +108,54 @@ def make_move(board, player, pit):
     seeds = new_board[player][pit]
     new_board[player][pit] = 0
 
-    original_player = player
-    current_player = player
-    index = pit  # Start at the selected pit
+    pits = ["player_1", "player_2"]
+    opponent = "player_2" if player == "player_1" else "player_1"
+    idx = pit
+    side = player
 
-    # Track last pit for capturing
-    last_pit = None
+    # Flat 14-pit view: p1 pits(0–5), p1 store(6), p2 pits(7–12), p2 store(13)
+    pos_map = [("player_1", i) for i in range(6)] + [("player_1", 6)] + \
+              [("player_2", i) for i in range(6)] + [("player_2", 6)]
+
+    # Compute starting index in pos_map
+    flat_index = pits.index(player) * 7 + pit
 
     while seeds > 0:
-        index += 1
+        flat_index = (flat_index + 1) % 14
+        side, idx = pos_map[flat_index]
 
-        # Handle wrap-around and store logic
-        if current_player == original_player:
-            # On original player's side: include their store (index 6)
-            if index > 6:  # After store (index 6), switch to opponent's side
-                current_player = "player_2" if current_player == "player_1" else "player_1"
-                index = 0
-        else:
-            # On opponent's side: skip their store (only indices 0-5)
-            if index >= 6:  # After pit 5, switch back to original player
-                current_player = original_player
-                index = 0
+        # Skip opponent's store
+        if side != player and idx == 6:
+            continue
 
-        # Add seed to the current pit/store
-        new_board[current_player][index] += 1
+        new_board[side][idx] += 1
         seeds -= 1
-        last_pit = (current_player, index)
 
-    # Check for capture (only on original player's side)
+    last_pit = (side, idx)
+
+    # Handle capture if last stone lands in empty pit on your side
     if (
-        last_pit[0] == original_player  # Last seed on original player's side
-        and last_pit[1] < 6  # Landed in a pit (not the store)
-        and new_board[original_player][last_pit[1]] == 1  # Pit was empty
+        last_pit[0] == player and
+        last_pit[1] < 6 and
+        new_board[player][last_pit[1]] == 1
     ):
-        opposite_player = "player_2" if original_player == "player_1" else "player_1"
         opposite_pit = 5 - last_pit[1]
-        captured = new_board[opposite_player][opposite_pit]
-        new_board[original_player][6] += captured + 1  # Capture + last seed
-        new_board[opposite_player][opposite_pit] = 0
-        new_board[original_player][last_pit[1]] = 0
+        captured = new_board[opponent][opposite_pit]
+        if captured > 0:
+            # 🧹 Remove the stone just placed (it's being captured)
+            new_board[player][6] += captured + 1  # Only add what's captured + 1 for this stone
+            new_board[player][last_pit[1]] = 0
+            new_board[opponent][opposite_pit] = 0
 
-    # Check for extra turn (last seed in store)
-    extra_turn = last_pit[0] == original_player and last_pit[1] == 6
+    # Extra turn if last seed ends in own store
+    extra_turn = last_pit[0] == player and last_pit[1] == 6
+
+    # Terminal state seed sweeping
+    if is_terminal(new_board):
+        for i in range(6):
+            new_board["player_1"][6] += new_board["player_1"][i]
+            new_board["player_1"][i] = 0
+            new_board["player_2"][6] += new_board["player_2"][i]
+            new_board["player_2"][i] = 0
 
     return new_board, extra_turn
