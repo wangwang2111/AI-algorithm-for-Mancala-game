@@ -3,13 +3,14 @@
 This project explores the design and development of intelligent agents for the game of **Mancala (Kalah variant)** using both classical search-based algorithms and modern deep reinforcement learning techniques. The goal is to build a flexible, modular AI framework that enables strategic decision-making through various approaches.
 
 Game Interface: mancala.html
-Demo Image: [Mancala Game Interface](report_interface.png)
+
+Demo Image: [Mancala Game Interface](https://github.com/wangwang2111/AI-algorithm-for-Mancala-game/blob/new-update/reports/game_interface.png)
 
 ### 🧠 Project Overview
 
 This project aims to create a flexible and modular AI framework for the Mancala game by integrating:
 
-* **Classical Search Algorithms**: Implementing traditional methods like Minimax and Alpha-Beta pruning to evaluate possible moves and determine optimal strategies.([github.com][1])
+* **Classical Search Algorithms**: Implementing traditional methods like Minimax and Alpha-Beta pruning to evaluate possible moves and determine optimal strategies.
 
 * **Deep Reinforcement Learning**: Utilizing Deep Q-Networks (DQN) built with PyTorch to enable the AI agent to learn and improve its gameplay over time through self-play and experience.
 
