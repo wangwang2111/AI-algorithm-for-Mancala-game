@@ -5,6 +5,24 @@ This project explores the design and development of intelligent agents for the g
 Game Interface: mancala.html
 Demo Image: [Mancala Game Interface](report_interface.png)
 
+### 🧠 Project Overview
+
+This project aims to create a flexible and modular AI framework for the Mancala game by integrating:
+
+* **Classical Search Algorithms**: Implementing traditional methods like Minimax and Alpha-Beta pruning to evaluate possible moves and determine optimal strategies.([github.com][1])
+
+* **Deep Reinforcement Learning**: Utilizing Deep Q-Networks (DQN) built with PyTorch to enable the AI agent to learn and improve its gameplay over time through self-play and experience.
+
+### 🧩 Key Components
+
+* **`dqn.py` & `dqn_wrapper.py`**: Modules that define and manage the Deep Q-Network agent, including its architecture and training procedures.
+
+* **`simulations.py`**: Scripts to run simulations for training and evaluating the performance of the AI agents.
+
+* **`analyze_results.ipynb`**: A Jupyter Notebook for analyzing the outcomes of simulations, providing insights into the agent's learning progress and effectiveness.
+
+* **`mancala.html` & `ui.js`**: Files that constitute a web-based user interface, allowing users to interact with the AI agent and play the Mancala game through a browser.
+
 ## 📁 Project Structure
 
 ```
