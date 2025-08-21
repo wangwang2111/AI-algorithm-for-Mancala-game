@@ -6,6 +6,7 @@ Game Interface: mancala.html
 
 Demo Image: [Mancala Game Interface](https://github.com/wangwang2111/AI-algorithm-for-Mancala-game/blob/new-update/reports/game_interface.png)
 
+
 ### 🧠 Project Overview
 
 This project aims to create a flexible and modular AI framework for the Mancala game by integrating:
