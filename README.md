@@ -2,8 +2,8 @@
 
 This project explores the design and development of intelligent agents for the game of **Mancala (Kalah variant)** using both classical search-based algorithms and modern deep reinforcement learning techniques. The goal is to build a flexible, modular AI framework that enables strategic decision-making through various approaches.
 
-The GitHub repository [wangwang2111/AI-algorithm-for-Mancala-game](https://github.com/wangwang2111/AI-algorithm-for-Mancala-game) presents a comprehensive project focused on developing intelligent agents for the Mancala game (specifically the Kalah variant) using both classical search algorithms and modern deep reinforcement learning techniques.
-
+Game Interface: mancala.html
+Demo Image: [Mancala Game Interface](report_interface.png)
 
 ### 🧠 Project Overview
 
@@ -40,6 +40,7 @@ AI-algorithm-for-Mancala-game/
 ├── runs/                        # TensorBoard training logs
 ├── dqn_wrapper.py               # Flask-compatible wrapper for DQN inference
 ├── server.py                    # RESTful API to interact with AI agents
+├── mancala.html                 # Web-based Mancala game interface
 ├── requirements.txt             # Python dependency file
 ├── simulations.py               # Match simulations between AI strategies
 ├── evaluations/                        # Simulations Result Logs by simulations.py
@@ -84,13 +85,12 @@ python -m http.server 8000
 ```
 
 Then open in your browser:
+
 ```
 http://localhost:8000/mancala.html
 ```
 
 You can choose agents like `alpha_beta`, `advanced`, `dqn`, `MCTS`, etc., in the UI.
-
----
 
 ## 🧠 Training the DQN Agent
 
@@ -134,5 +134,4 @@ conda activate mancala-ai
 ## 🤝 Credits
 
 Developed by:
-- **Dang Quang Nguyen**
-Trent University – AMOD 5310H: Artificial Intelligence
+- **Dylan (Quang) Nguyen**
