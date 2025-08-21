@@ -4,7 +4,7 @@ This project explores the design and development of intelligent agents for the g
 
 Game Interface: mancala.html
 
-Demo Image: [Mancala Game Interface](https://github.com/wangwang2111/AI-algorithm-for-Mancala-game/blob/new-update/reports/game_interface.png)
+Demo Image: [Mancala Game Interface](https://github.com/wangwang2111/AI-algorithm-for-Mancala-game/blob/main/reports/game_interface.png)
 
 
 ### 🧠 Project Overview
