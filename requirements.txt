@@ -2,11 +2,12 @@ matplotlib==3.9.0                 # Optional (for plotting)
 numpy==1.26.3                     # Used in almost all logic
 pandas==2.2.2                     # Used in evaluation/reporting
 seaborn==0.13.2                   # Optional (data viz)
-streamlit==1.44.1                 # Only if you're building a web UI
 tensorboard==2.19.0               # Used for logging DQN training
 tensorboard-data-server==0.7.2   # Required by TensorBoard
-torch==2.3.1+cu121                # Core to DQN (PyTorch)
+# torch==2.3.1+cu121                # Core to DQN (PyTorch)
 torchmetrics==1.4.0.post0         # If you're using evaluation metrics
 tqdm==4.66.4                      # Used for training progress bars
 flask==3.1.0                      # Server backend
+flask_smorest==0.46.0            # REST API + OpenAPI
 flask_cors==5.0.1                 # Cross-origin API access
+gunicorn==21.2.0

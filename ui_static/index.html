@@ -1,0 +1,43 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Mancala AI</title>
+  <link rel="stylesheet" href="./styles.css" />
+  <link rel="icon" href="./assets/icons/favicon.ico" />
+</head>
+<body>
+  <header class="topbar">
+    <h1>Mancala AI</h1>
+    <div style="display:flex; align-items:center; gap:10px;">
+    <button id="mute-btn" title="Mute/Unmute">🔈</button>
+    <div id="health" class="health">loading…</div>
+  </div>
+  </header>
+
+  <main class="wrap">
+    <section class="board-card">
+      <div id="board"></div>
+      <div class="status">
+        <div id="turn"></div>
+        <div id="legal"></div>
+      </div>
+    </section>
+
+    <section class="controls-card" id="controls"></section>
+
+    <section class="log-card">
+      <h3>Move Log</h3>
+      <ol id="log"></ol>
+    </section>
+  </main>
+
+  <script src="./env.js"></script>
+  <script src="./js/api.js"></script>
+  <script src="./js/components/Sound.js"></script>
+  <script src="./js/components/Board.js"></script>
+  <script src="./js/components/Controls.js"></script>
+  <script src="./js/app.js"></script>
+</body>
+</html>
