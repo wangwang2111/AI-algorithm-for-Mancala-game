@@ -251,4 +251,6 @@ The DQN service wrapper (`mancala_ai/agents/dqn.py`) lazily loads `DQNAgent` fro
 
 ## 🙌 Credits
 
+Developed by:
 
+- **Dylan (Quang) Nguyen*
