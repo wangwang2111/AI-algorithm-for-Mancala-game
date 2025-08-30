@@ -1,7 +1,3 @@
-Here’s a polished, copy-pasteable **README.md** for your repo.
-
----
-
 # Mancala AI — End-to-End Game AI (Flask API + Animated UI)
 
 Play Mancala against multiple AI agents (DQN, Minimax, Alpha-Beta, MCTS, Advanced Heuristic) with a smooth, animated web UI. The project demonstrates an end-to-end ML product: REST API, realtime UI with stone animations, and a simple model registry for hot-swapping policies.
@@ -255,4 +251,6 @@ The DQN service wrapper (`mancala_ai/agents/dqn.py`) lazily loads `DQNAgent` fro
 
 ## 🙌 Credits
 
+Developed by:
 
+- **Dylan (Quang) Nguyen*
