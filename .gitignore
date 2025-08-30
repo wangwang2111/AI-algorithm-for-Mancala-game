@@ -4,8 +4,7 @@
 references/
 
 # pycache by vscode
-ai/__pycache__/
 __pycache__/
 
 # debug game's rules
-ai/debug_mancala_rules.py
+scripts/

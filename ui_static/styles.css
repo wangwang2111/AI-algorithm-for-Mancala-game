@@ -1,0 +1,171 @@
+:root {
+  --bg: #0f1221;
+  --card: #151836;
+  --muted: #b9c1ff;
+  --text: #eaf0ff;
+  --accent: #7aa2ff;
+  --cta: #00d4a6;
+  --danger: #ff6b6b;
+  --pit: #202759;
+  --pit-hi: #2a3280;
+  --store: #19204a;
+  --ring: rgba(122,162,255,0.5);
+}
+
+* { box-sizing: border-box; }
+html, body { height: 100%; }
+body {
+  margin: 0; font-family: ui-sans-serif, system-ui, -apple-system, Segoe UI, Roboto, Ubuntu, Cantarell;
+  background: radial-gradient(1200px 800px at 20% -10%, #1b1f47 0%, #0b0d1b 60%), var(--bg);
+  color: var(--text);
+}
+
+.topbar {
+  display: flex; align-items: center; justify-content: space-between;
+  padding: 12px 18px; border-bottom: 1px solid #252a5b;
+  backdrop-filter: blur(6px);
+}
+.topbar h1 { margin: 0; font-size: 18px; letter-spacing: 0.5px; }
+.health { font-size: 12px; color: var(--muted); opacity: 0.9; }
+
+.wrap {
+  max-width: 980px; margin: 22px auto; padding: 0 14px;
+  display: grid; gap: 16px;
+  grid-template-columns: 1.3fr 0.7fr;
+}
+.board-card, .controls-card, .log-card {
+  background: linear-gradient(180deg, var(--card), #0f1331);
+  border: 1px solid #222656; border-radius: 16px; padding: 16px;
+  box-shadow: 0 12px 30px rgba(0,0,0,0.3), inset 0 1px 0 rgba(255,255,255,0.03);
+}
+.log-card h3 { margin: 4px 0 10px; font-size: 14px; color: var(--muted); }
+
+#board { display: grid; gap: 8px; }
+.board {
+  display: grid;
+  grid-template-columns: 80px 1fr 80px;
+  gap: 10px; align-items: center;
+}
+.row { display: grid; grid-template-columns: repeat(6, 1fr); gap: 8px; }
+.row.top { direction: rtl; } /* display right→left for P2 row */
+
+.store {
+  height: 100%; min-height: 220px; border-radius: 16px;
+  background: radial-gradient(600px 300px at 50% -30%, #27307b, #121636 70%);
+  border: 1px solid #27307b; display: grid; place-items: center;
+  box-shadow: inset 0 0 0 1px rgba(255,255,255,0.03);
+  position: relative;
+}
+.store .count { font-size: 36px; font-weight: 700; text-shadow: 0 1px 0 rgba(0,0,0,0.6); }
+
+.pit {
+  background: linear-gradient(180deg, var(--pit), #161b3a);
+  border: 1px solid #27307b; border-radius: 14px; height: 70px;
+  display: grid; place-items: center; cursor: pointer;
+  box-shadow: inset 0 0 0 1px rgba(255,255,255,0.03), 0 6px 18px rgba(0,0,0,0.35);
+  transition: transform .08s ease, box-shadow .12s ease, background .12s ease;
+  position: relative;
+}
+.pit:hover { transform: translateY(-1px); box-shadow: 0 10px 24px rgba(0,0,0,0.45); }
+.pit.legal { outline: 2px solid var(--ring); background: linear-gradient(180deg, var(--pit-hi), #161b3a); }
+.pit .count { font-weight: 700; font-size: 18px; }
+
+.status { display: flex; gap: 12px; margin-top: 8px; color: var(--muted); font-size: 13px; }
+.badge {
+  display: inline-flex; align-items: center; gap: 6px;
+  padding: 4px 8px; border: 1px solid #2b3170; border-radius: 999px;
+  background: #121636; color: var(--muted);
+}
+.dot { width: 8px; height: 8px; border-radius: 50%; background: var(--accent); box-shadow: 0 0 6px var(--accent); }
+
+.controls { display: grid; gap: 10px; }
+.controls .row { display: flex; gap: 10px; flex-wrap: wrap; }
+select, button {
+  background: #121636; color: var(--text);
+  border: 1px solid #2b3170; border-radius: 10px; padding: 10px 12px;
+  font-size: 14px; cursor: pointer;
+}
+button.cta { background: linear-gradient(180deg, #00e2b5, #00c39b); border: none; color: #032b23; font-weight: 700; }
+button.warn { background: #22182a; border-color: #5b2b70; color: #e9c2ff; }
+button.danger { background: #2a1b1b; border-color: #6b2a2a; color: #ffb6b6; }
+button:disabled { opacity: 0.5; cursor: not-allowed; }
+
+#mute-btn {
+  background: #121636; color: var(--text); border: 1px solid #2b3170;
+  border-radius: 10px; padding: 6px 10px; cursor: pointer; font-size: 14px;
+}
+#mute-btn:hover { border-color: var(--accent); }
+
+/* Pits */
+.pit, .store { position: relative; overflow: hidden; }
+.pit {
+  background: linear-gradient(180deg, #1a2253, #0f1434); /* a bit darker to boost contrast */
+  border: 1px solid #2a3a94;
+  border-radius: 14px;
+  height: 92px; /* a touch taller for more room */
+  display: grid; place-items: center; cursor: pointer;
+  box-shadow: inset 0 0 0 1px rgba(255,255,255,0.04), 0 10px 24px rgba(0,0,0,0.45);
+}
+
+/* Stones — bigger, brighter, with glow and always on top */
+.stone {
+  position: absolute;
+  width: 18px;
+  height: 18px;
+  border-radius: 50%;
+  /* vivid amber with highlight; you can change colors later */
+  background: radial-gradient(circle at 30% 30%, #fff2a6 35%, #ffbe2e 70%);
+  border: 1px solid rgba(0,0,0,.28);
+  box-shadow:
+    0 0 10px rgba(255, 205, 90, .85),
+    0 2px 3px rgba(0,0,0,.45);
+  transform: translate(0,0);
+  transition: transform .22s ease-in-out;
+  z-index: 3;
+  pointer-events: none;          /* so clicks still hit the pit button */
+}
+.stone.sowing { pointer-events: none; z-index: 5; }
+
+/* keep numbers visible */
+.pit .count,
+.store .count {
+  position: relative;
+  z-index: 10;
+  display: grid;
+  place-items: center;
+  font-weight: 700;
+  color: rgba(255,255,255,0.95);
+}
+
+/* layer that holds stones inside each pit/store */
+.pit .stones,
+.store .stones {
+  position: absolute;
+  inset: 6px;               /* inner padding, keeps stones off the edges */
+  border-radius: 12px;
+  pointer-events: none;      /* clicks go to the pit button */
+  z-index: 3;                /* below the numeric count */
+}
+
+/* stones: brighter, a bit larger, with glow */
+.stone {
+  position: absolute;
+  width: 18px;
+  height: 18px;
+  border-radius: 50%;
+  background: radial-gradient(circle at 30% 30%, #fff6b8 35%, #ffc341 70%);
+  border: 1px solid rgba(0,0,0,.28);
+  box-shadow: 0 0 10px rgba(255,205,90,.85), 0 2px 3px rgba(0,0,0,.45);
+  transform: none;           /* we'll position via left/top */
+  transition: transform .22s ease-in-out;
+}
+
+.stone.sowing { pointer-events: none; z-index: 5; }
+
+/* make pits a touch darker for contrast (optional) */
+.pit {
+  background: linear-gradient(180deg, #1a2253, #0f1434);
+  border: 1px solid #2a3a94;
+  height: 92px;
+}
+

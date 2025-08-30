@@ -1,139 +1,258 @@
-# 🧠 AI Algorithms for the Mancala Game
-
-This project explores the design and development of intelligent agents for the game of **Mancala (Kalah variant)** using both classical search-based algorithms and modern deep reinforcement learning techniques. The goal is to build a flexible, modular AI framework that enables strategic decision-making through various approaches.
-
-Game Interface: mancala.html
-
-Demo Image: [Mancala Game Interface](https://github.com/wangwang2111/AI-algorithm-for-Mancala-game/blob/main/reports/game_interface.png)
-
-
-### 🧠 Project Overview
-
-This project aims to create a flexible and modular AI framework for the Mancala game by integrating:
-
-* **Classical Search Algorithms**: Implementing traditional methods like Minimax and Alpha-Beta pruning to evaluate possible moves and determine optimal strategies.
-
-* **Deep Reinforcement Learning**: Utilizing Deep Q-Networks (DQN) built with PyTorch to enable the AI agent to learn and improve its gameplay over time through self-play and experience.
-
-### 🧩 Key Components
-
-* **`dqn.py` & `dqn_wrapper.py`**: Modules that define and manage the Deep Q-Network agent, including its architecture and training procedures.
-
-* **`simulations.py`**: Scripts to run simulations for training and evaluating the performance of the AI agents.
-
-* **`analyze_results.ipynb`**: A Jupyter Notebook for analyzing the outcomes of simulations, providing insights into the agent's learning progress and effectiveness.
-
-* **`mancala.html` & `ui.js`**: Files that constitute a web-based user interface, allowing users to interact with the AI agent and play the Mancala game through a browser.
-
-## 📁 Project Structure
-
-```
-AI-algorithm-for-Mancala-game/
-├── ai/
-│   ├── __init__.py
-│   ├── rules.py                 # Game rules and logic (legal moves, termination)
-│   ├── minimax.py               # Basic Minimax agent
-│   ├── alpha_beta.py            # Minimax with alpha-beta pruning
-│   ├── advanced_heuristic.py    # Minimax with domain-specific heuristics
-│   ├── MCTS.py                  # Monte Carlo Tree Search agent
-├── dqn.py                       # Deep Q-Network agent
-├── save/
-│   └── policy_final.pt          # Trained DQN model weights
-├── runs/                        # TensorBoard training logs
-├── dqn_wrapper.py               # Flask-compatible wrapper for DQN inference
-├── server.py                    # RESTful API to interact with AI agents
-├── mancala.html                 # Web-based Mancala game interface
-├── requirements.txt             # Python dependency file
-├── simulations.py               # Match simulations between AI strategies
-├── evaluations/                        # Simulations Result Logs by simulations.py
-├── analyze_results/                    # Analyze and Visualize the simulated results in evaluations/
-└── README.md                    # Project overview and usage guide
-```
-
-## 🧠 AI Strategy Selection
-
-This project includes multiple AI agents to enable comparative evaluation and hybrid strategies:
-
-| Agent Type           | Description                                                                 |
-|----------------------|-----------------------------------------------------------------------------|
-| `Minimax`            | Classic adversarial search assuming perfect play.                           |
-| `Alpha-Beta`         | Optimized Minimax with pruning for deeper search trees.                     |
-| `Advanced Heuristic` | Alpha-Beta enhanced with domain-specific heuristics (e.g., extra turn, store control). |
-| `MCTS`               | Stochastic search that balances exploration and exploitation.               |
-| `DQN`                | Model-free Deep Reinforcement Learning agent trained via self-play.         |
-
-## 🧪 Running Simulations
-
-To simulate matches between any two agents:
-
-```bash
-python simulations.py
-```
-
-Simulations will produce performance statistics (e.g., win rates, draw rates) across agent matchups.
+Here’s a polished, copy-pasteable **README.md** for your repo.
 
 ---
 
-## 🌐 Mancala Web Interface
+# Mancala AI — End-to-End Game AI (Flask API + Animated UI)
 
-### 1. Run the Flask API backend:
-```bash
-python server.py
+Play Mancala against multiple AI agents (DQN, Minimax, Alpha-Beta, MCTS, Advanced Heuristic) with a smooth, animated web UI. The project demonstrates an end-to-end ML product: REST API, realtime UI with stone animations, and a simple model registry for hot-swapping policies.
+
+## ✨ Features
+
+* **Agents:** `dqn`, `minimax`, `alpha_beta`, `mcts`, `advanced` (aliases: `advanced_heuristic`, `adv`, `ah`)
+* **Animated sowing:** real stones move and persist; counts update; hover tooltips show values
+* **REST API:** `/api/health`, `/api/newgame`, `/api/apply`, `/api/move`
+* **Model registry:** drop `policy.pt` + `meta.json` into `model_registry/latest/`
+* **Dockerized:** `docker compose up` runs API + UI; UI proxies `/api/*` to the API
+* **Local dev friendly:** run API and UI separately; optional `env.js` to point to API
+
+---
+
+## 📦 Project Structure
+
 ```
-
-### 2. Serve the frontend (requires `mancala.html`):
-```bash
-python -m http.server 8000
-```
-
-Then open in your browser:
-
-```
-http://localhost:8000/mancala.html
-```
-
-You can choose agents like `alpha_beta`, `advanced`, `dqn`, `MCTS`, etc., in the UI.
-
-## 🧠 Training the DQN Agent
-
-To train the Deep Q-Network agent from scratch:
-
-```bash
-python dqn.py
-```
-
-This will store training logs in `runs/` and save the best policy to `save/policy_final.pt`.
-
-### 📈 Monitor Training Progress
-
-You can visualize training metrics (e.g., episode rewards, losses) using TensorBoard:
-
-```bash
-python -m tensorboard.main --logdir=runs
-```
-
-Then visit:
-```
-http://localhost:6006/
+mancala-ai/
+├─ src/
+│  └─ mancala_ai/
+│     ├─ engine/
+│     │  └─ core.py              # game rules (initialize_board, make_move, etc.)
+│     ├─ agents/
+│     │  ├─ dqn.py               # DQN wrapper (loads training.dqn.DQNAgent lazily)
+│     │  ├─ minimax.py           # simple_minimax(...) or choose_move(...)
+│     │  ├─ alpha_beta.py        # minimax_alpha_beta(...) or choose_move(...)
+│     │  ├─ MCTS.py              # mcts_decide(...)
+│     │  └─ advanced_heuristic.py# advanced_heuristic_minimax(...)
+│     ├─ api/
+│     │  ├─ app.py               # Flask app factory (create_app)
+│     │  └─ routes.py            # /api endpoints
+│     ├─ io/
+│     │  └─ registry.py          # pick_action(), current_meta()
+│     ├─ training/
+│     │  └─ dqn.py               # DQNAgent (used by agents/dqn.py)
+│     ├─ utils/
+│     │  └─ features.py          # state encoders, etc.
+│     └─ ...
+├─ ui_static/
+│  ├─ index.html
+│  ├─ styles.css
+│  └─ js/
+│     ├─ app.js                  # game loop + animations
+│     ├─ api.js                  # calls /api/*
+│     └─ components/
+│        ├─ Board.js
+│        ├─ Controls.js
+│        └─ Sound.js
+├─ model_registry/
+│  └─ latest/
+│     ├─ policy.pt
+│     └─ meta.json               # {"version":"v0.1","win_rate":0.83,"trained_at":"..."}
+├─ docker/
+│  ├─ api.Dockerfile             # Flask API (Gunicorn)
+│  └─ ui.Dockerfile              # Nginx static UI on port 5173 with /api proxy
+├─ docker-compose.yml
+├─ requirements.txt
+├─ src/wsgi.py                   # wsgi:app shim for Gunicorn
+└─ README.md
 ```
 
 ---
 
-## 📦 Installation
+## 🚀 Quickstart (Docker)
 
-Install dependencies using pip:
+**Prereqs:** Docker Desktop (Windows/macOS) or Docker Engine (Linux).
 
 ```bash
+docker compose up --build
+```
+
+* UI: [http://localhost:5173](http://localhost:5173)
+* API (direct): [http://localhost:8000/api/health](http://localhost:8000/api/health)
+
+**How it’s wired:** the Nginx UI container serves static files on **5173** and **proxies `/api/*` to the API** service on **8000**, so the browser uses same-origin URLs like `/api/move`.
+
+### Hot-swap model
+
+Drop new weights and metadata into `./model_registry/latest/` (mounted read-only into the container). If your DQN wrapper caches the model, restart the API service to reload:
+
+```bash
+docker compose restart api
+```
+
+---
+
+## 🧰 Local Development (without Docker)
+
+### 1) Backend (Flask API)
+
+```bash
+python -m venv .venv
+. .venv/bin/activate     # Windows: .venv\Scripts\activate
+pip install --upgrade pip
+# If you don't need GPU, use CPU torch in requirements.txt: torch==2.3.1
 pip install -r requirements.txt
+
+# Run the API (Gunicorn)
+python -m gunicorn -w 2 -k gthread -b 0.0.0.0:8000 wsgi:app
+# Health check
+curl http://localhost:8000/api/health
 ```
 
-Or using conda:
+> If you see cuDNN/CUDA issues locally, stick to CPU Torch (`torch==2.3.1`) or let the code’s lazy import fall back to non-DQN agents.
+
+### 2) Frontend (static UI)
+
+Serve the `ui_static/` folder on **5173**. Two simple options:
+
+**Python:**
 
 ```bash
-conda activate mancala-ai
+python -m http.server 5173 -d ui_static
 ```
 
-## 🤝 Credits
+**Node (http-server):**
 
-Developed by:
-- **Dylan (Quang) Nguyen**
+```bash
+npx http-server ui_static -p 5173 -c-1
+```
+
+## 🔌 API Reference
+
+Base URL (Docker UI via proxy): `/api`
+Base URL (direct API): `http://localhost:8000/api`
+
+### `GET /api/health`
+
+Health info and model meta.
+
+**Response**
+
+```json
+{
+  "status": "ok",
+  "model": { "version": "v0.1", "win_rate": 0.83, "trained_at": "..." }
+}
+```
+
+### `POST /api/newgame`
+
+Starts a new game.
+
+**Response**
+
+```json
+{
+  "state": {
+    "pits": [[4,4,4,4,4,4],[4,4,4,4,4,4]],
+    "stores": [0,0],
+    "current_player": 0
+  }
+}
+```
+
+### `POST /api/apply`
+
+Apply a **human** move (no AI).
+**Body**
+
+```json
+{ "state": { ... }, "action": 3 }
+```
+
+**Response**
+
+```json
+{
+  "next_state": { ... },
+  "reward": 0.0,
+  "done": false
+}
+```
+
+### `POST /api/move`
+
+Ask an **agent** to move.
+**Body**
+
+```json
+{ "state": { ... }, "agent": "advanced" }
+```
+
+**Accepted agents**
+
+* `dqn`, `minimax`, `alpha_beta`, `mcts`, `advanced`
+* Aliases: `advanced_heuristic`, `adv`, `ah`, `alpha-beta`, `alphabeta`
+
+**Response**
+
+```json
+{
+  "action": 0,
+  "next_state": { ... },
+  "reward": 0.0,
+  "done": false
+}
+```
+
+## 🧠 Model Registry
+
+* Folder: `model_registry/latest/`
+* Files:
+
+  * `policy.pt` — DQN weights
+  * `meta.json` — arbitrary metadata used by `/api/health`, e.g.:
+
+    ```json
+    {"version": "v0.2", "win_rate": 0.67, "trained_at": "2025-08-29 01:55"}
+    ```
+
+The DQN service wrapper (`mancala_ai/agents/dqn.py`) lazily loads `DQNAgent` from `mancala_ai/training/dqn.py` with `state_shape=(29,)` by default and guards against missing Torch/CUDA. If weights change, restart the API to reload.
+
+
+## ⚙️ Configuration
+
+* `MODEL_REGISTRY` (env var): override model path (default: `model_registry/latest`)
+* **CORS:** When running UI and API on different origins without the Nginx proxy, enable CORS in Flask:
+
+  ```python
+  from flask_cors import CORS
+  app = create_app()
+  CORS(app, resources={r"/api/*": {"origins": FRONTWEB_ORIGIN}})
+  ```
+
+
+## 🛠️ Troubleshooting
+
+* **UI can’t reach API (404 on `/api/...`)**
+  Use Docker (UI proxy on 5173), or create `env.js` that sets `window.API_BASE="http://localhost:8000/api"` and ensure it loads **before** `js/api.js`.
+
+* **Gunicorn error `--factory` not recognized**
+  We use a WSGI shim: `src/wsgi.py` and run `gunicorn wsgi:app`.
+
+* **Torch/CUDA errors**
+  Use CPU Torch (`torch==2.3.1`) or let the app fall back to non-DQN agents. In Docker, default images install CPU wheels.
+
+* **Stones duplicate during animation**
+  The UI never re-renders stone DOM after a move; it only animates real stones and updates counts. If you tweak UI code, avoid re-adding stones after sowing.
+
+* **Swagger/OpenAPI**
+  If you wire `flask-smorest`/`apispec`, mount docs under your preferred route; the current setup focuses on a compact REST surface.
+
+## 📝 Roadmap Ideas
+
+* `/api/reload` to hot-reload DQN weights without restart
+* Self-play training job + MLflow tracking
+* ELO evaluator across agents
+* Cloud deploy (Render/Fly/EC2) + HTTPS + CDN for UI assets
+
+## 🙌 Credits
+
+

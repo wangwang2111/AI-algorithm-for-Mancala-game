@@ -1,0 +1,64 @@
+version: "3.9"
+
+services:
+  api:
+    build:
+      context: .
+      dockerfile: docker/api.Dockerfile
+      # If you uncomment the optional PyTorch install section in api.Dockerfile,
+      # you can pass this build arg:
+      # args:
+      #   INSTALL_TORCH: "1"
+    deploy:
+      resources:
+        reservations:
+          devices:
+            - capabilities: ["gpu"]
+    # For Docker Desktop or non-Swarm Compose v2, you can use:
+    #  device_requests:
+    #    - driver: nvidia
+    #      capabilities: [gpu]
+
+    environment:
+      - PYTHONUNBUFFERED=1
+      - MODEL_REGISTRY=/app/model_registry/latest
+    ports:
+      - "8000:8000"
+    volumes:
+      # Mount your model weights so you can swap them without rebuilding
+      - ./model_registry:/app/model_registry:ro
+      # (Optional) live-mount your src for quick iteration; comment out in prod
+      # - ./src:/app/src:ro
+    healthcheck:
+      test: ["CMD", "curl", "-fsS", "http://localhost:8000/api/health"]
+      interval: 10s
+      timeout: 3s
+      retries: 5
+    restart: unless-stopped
+
+  ui:
+    build:
+      context: .
+      dockerfile: docker/ui.Dockerfile
+      args:
+        # Change if your static folder name is different
+        UI_DIR: "ui_static"
+    ports:
+      - "5173:5173"
+    depends_on:
+      api:
+        condition: service_healthy
+    restart: unless-stopped
+
+
+# From repo root (adjust paths if needed)
+
+# API
+# docker build -f docker/api.Dockerfile -t mancala-api .
+# docker run --rm -p 8000:8000 \
+#   -e MODEL_REGISTRY=/app/model_registry/latest \
+#   mancala-api
+
+# # UI (point to API)
+# docker build -f docker/ui.Dockerfile -t mancala-ui --build-arg API_BASE=http://localhost:8000 .
+# docker run --rm -p 8080:8080 mancala-ui
