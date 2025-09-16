@@ -88,8 +88,12 @@ docker compose restart api
 ## 🧰 Local Development (without Docker)
 
 ### 1) Backend (Flask API)
-
 ```bash
+export PYTHONPATH=/src \
+       MODEL_REGISTRY="$(pwd)/model_registry/latest"
+
+export FLASK_APP=wsgi:app
+
 python -m venv .venv
 . .venv/bin/activate     # Windows: .venv\Scripts\activate
 pip install --upgrade pip
@@ -97,12 +101,15 @@ pip install --upgrade pip
 pip install -r requirements.txt
 
 # Run the API (Gunicorn)
-python -m gunicorn -w 2 -k gthread -b 0.0.0.0:8000 wsgi:app
+python -m gunicorn -w 2 --threads 8 -k gthread \
+  --chdir src -b 0.0.0.0:8000 \
+  wsgi:app
+
 # Health check
 curl http://localhost:8000/api/health
 ```
 
-> If you see cuDNN/CUDA issues locally, stick to CPU Torch (`torch==2.3.1`) or let the code’s lazy import fall back to non-DQN agents.
+<!-- > If you see cuDNN/CUDA issues locally, stick to CPU Torch (`torch==2.3.1`) or let the code’s lazy import fall back to non-DQN agents. -->
 
 ### 2) Frontend (static UI)
 

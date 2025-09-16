@@ -22,7 +22,9 @@ def create_app():
     CORS(app, resources={r"/api/*": {
         "origins": [
             "http://localhost:5173",   # dev UI
+            "http://127.0.0.1:5173",   # dev UI
             "http://localhost:8080",   # dev UI
+            "http://127.0.0.1:8080"
             "https://your-ui-domain.com"  # prod UI
         ]
     }})

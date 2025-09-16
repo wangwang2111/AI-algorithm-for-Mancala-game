@@ -44,7 +44,7 @@ services:
         # Change if your static folder name is different
         UI_DIR: "ui_static"
     ports:
-      - "5173:5173"
+      - "8080:8080"
     depends_on:
       api:
         condition: service_healthy

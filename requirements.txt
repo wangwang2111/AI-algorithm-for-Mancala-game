@@ -11,3 +11,4 @@ flask==3.1.0                      # Server backend
 flask_smorest==0.46.0            # REST API + OpenAPI
 flask_cors==5.0.1                 # Cross-origin API access
 gunicorn==21.2.0
+pytest==7.4.2                     # Testing framework
