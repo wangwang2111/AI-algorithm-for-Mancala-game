@@ -1,217 +1,186 @@
-import math
-import random
-from collections import defaultdict
-import time
-import copy
-from functools import lru_cache
-from mancala_ai.engine.core import new_game, legal_actions, _make_move_board, _is_terminal_board, evaluate
+# Monte Carlo Tree Search (STATE-BASED)
+from __future__ import annotations
+import copy, math, random
+from dataclasses import dataclass, field
+from typing import Dict, List, Optional, Tuple
 
-class MCTSNode:
-    def __init__(self, board, player, parent=None, move=None):
-        self.board = board  # Now storing original board (modified below)
-        self.player = player
-        self.parent = parent
-        self.move = move
-        self.children = []
-        self.visits = 0
-        self.wins = 0.0
-        self.virtual_loss = 0
-        self.untried_moves = legal_actions(self.board, player)
-        
-        # Progressive bias and RAVE
-        self.heuristic_value = self.evaluate_board() if move is not None else 0
-        self.rave_visits = defaultdict(int)
-        self.rave_wins = defaultdict(float)
-        
-        # Depth tracking for adaptive strategies
-        self.depth = parent.depth + 1 if parent else 0
+from mancala_ai.engine.core import legal_actions, step, evaluate
 
-    def board_to_tuple(self, board):
-        """Convert board to hashable tuple"""
-        return (
-            tuple(board["player_1"]),
-            tuple(board["player_2"])
-        )
+# ------------------------- utilities -------------------------
 
-    def evaluate_board(self):
-        """Quick evaluation from node's perspective"""
-        return evaluate(self.board, self.player) / 24.0  # Normalized
+def _score_for(state: Dict, root_player_idx: int) -> float:
+    """Heuristic score from the ROOT player's perspective (bounded to [-1, 1])."""
+    s = copy.deepcopy(state)
+    s["current_player"] = root_player_idx
+    v = float(evaluate(s))
+    # Bound scores so UCB doesn't blow up; tanh keeps shape but stabilizes.
+    return math.tanh(v / 10.0)
 
-    def is_fully_expanded(self):
-        return len(self.untried_moves) == 0
+def _is_terminal(state: Dict) -> bool:
+    return sum(state["pits"][0]) == 0 or sum(state["pits"][1]) == 0
 
-    def best_child(self, exploration_weight=1.4, heuristic_weight=0.3):
-        """Enhanced child selection with RAVE and progressive bias"""
-        if not self.children:
-            return None
-            
-        log_visits = math.log(self.visits + 1e-10)
-        best_score = -float('inf')
-        best_child = None
-        
-        for child in self.children:
-            # UCT components
-            exploit = (child.wins - child.virtual_loss) / (child.visits + 1e-5)
-            explore = math.sqrt(log_visits / (child.visits + 1e-5))
-            
-            # Progressive bias (decays with visits)
-            heuristic = child.heuristic_value * heuristic_weight / (child.visits**0.5 + 1)
-            
-            # RAVE component
-            beta = math.sqrt(2000 / (3 * child.visits + 2000)) if child.visits > 0 else 1
-            rave = beta * (self.rave_wins[child.move] / (self.rave_visits[child.move] + 1e-5))
-            
-            # Dynamic exploration decay
-            dynamic_explore = exploration_weight * (0.99 ** self.depth)
-            
-            score = exploit + dynamic_explore * explore + heuristic + rave
-            
-            if score > best_score:
-                best_score = score
-                best_child = child
-                
-        return best_child
+# ------------------------- node -------------------------
 
-    def expand(self):
-        """Expansion with move ordering"""
-        if not self.untried_moves:
-            return None
-            
-        # Sort moves by heuristic (captures > extra turns > random)
-        self.untried_moves.sort(key=lambda m: self.move_heuristic(m), reverse=True)
-        
-        move = self.untried_moves.pop()
-        new_board, extra_turn = _make_move_board(copy.deepcopy(self.board), self.player, move)
-        next_player = self.player if extra_turn else self.opponent()
-        
-        child = MCTSNode(new_board, next_player, self, move)
-        self.children.append(child)
+@dataclass
+class _Node:
+    state: Dict
+    parent: Optional["_Node"] = None
+    incoming_action: Optional[int] = None
+
+    children: Dict[int, "_Node"] = field(default_factory=dict)
+    untried_actions: List[int] = field(default_factory=list)
+
+    N: int = 0           # visit count
+    W: float = 0.0       # total value (from ROOT perspective)
+    Q: float = 0.0       # mean value
+    P: Dict[int, float] = field(default_factory=dict)  # priors per action (optional)
+
+    def is_expanded(self) -> bool:
+        return len(self.untried_actions) == 0
+
+    def expand_one(self) -> "_Node":
+        """Expand exactly one child (lazy expansion)."""
+        a = self.untried_actions.pop()
+        ns, _, _ = step(self.state, a)
+        child = _Node(state=ns, parent=self, incoming_action=a)
+        # Initialize child's untried actions
+        child.untried_actions = list(legal_actions(ns))
+        self.children[a] = child
         return child
 
-    def move_heuristic(self, move):
-        """Fast move evaluation without full simulation"""
-        stones = self.board[self.player][move]
-        landing_pit = move + stones
-        if landing_pit % 13 == 6:  # Lands in store
-            return 3
-        if landing_pit < 6 and self.board[self.player][landing_pit] == 0:
-            opposite_pit = 5 - landing_pit
-            if self.board[self.opponent()][opposite_pit] > 0:
-                return 2 + self.board[self.opponent()][opposite_pit]  # Capture bonus
-        return 1 + stones/6  # Small bonus for spreading stones
+    def ucb_score(self, action: int, c_puct: float) -> float:
+        child = self.children[action]
+        prior = self.P.get(action, 1.0 / max(1, len(self.children)))
+        # Q + c * P * sqrt(N_parent) / (1 + N_child)
+        return child.Q + c_puct * prior * math.sqrt(self.N + 1e-9) / (1 + child.N)
 
-    def rollout(self):
-        """Enhanced rollout with adaptive policy"""
-        current_board = copy.deepcopy(self.board)
-        current_player = self.player
-        rollout_moves = []
-        max_depth = 10 + (48 - sum(current_board["player_1"][:6])) // 4  # Dynamic depth
-        
-        for _ in range(max_depth):
-            if _is_terminal_board(current_board):
-                break
-                
-            moves = legal_actions(current_board, current_player)
-            if not moves:
-                break
-                
-            move = self.select_rollout_move(current_board, current_player, moves)
-            rollout_moves.append(move)
-            current_board, extra_turn = _make_move_board(current_board, current_player, move)
-            
-            # Early termination if significant advantage
-            if abs(evaluate(current_board, self.player)) > 12:
-                break
-                
-            if not extra_turn:
-                current_player = self.opponent()
-                
-        result = (evaluate(current_board, self.player) + 1) / 2  # Normalized to [0,1]
-        return result, rollout_moves
+    def best_child_ucb(self, c_puct: float) -> Tuple[int, "_Node"]:
+        best_a, best_node, best_score = None, None, -1e9
+        for a, ch in self.children.items():
+            s = self.ucb_score(a, c_puct)
+            if s > best_score:
+                best_score, best_a, best_node = s, a, ch
+        return best_a, best_node
 
-    def select_rollout_move(self, board, player, moves):
-        """Adaptive rollout policy (70% heuristic early, 30% late)"""
-        game_phase = sum(board[player][:6])  # 0-24 stones remaining
-        if random.random() < 0.7 - 0.4 * (game_phase / 24):
-            # Heuristic selection
-            best_score = -1
-            best_move = moves[0]
-            for move in moves:
-                stones = board[player][move]
-                landing_pit = move + stones
-                if landing_pit % 13 == 6:  # Always take store moves
-                    return move
-                if landing_pit < 6 and board[player][landing_pit] == 0:
-                    opposite_pit = 5 - landing_pit
-                    if board[self.opponent()][opposite_pit] > 0:  # Capture
-                        return move
-                # Secondary heuristic
-                score = stones + (6 - abs(3 - move))  # Prefer center pits
-                if score > best_score:
-                    best_score = score
-                    best_move = move
-            return best_move
-        return random.choice(moves)
-    
-    def backpropagate(self, result, rollout_moves):
-        """Backpropagation with RAVE updates"""
-        self.visits += 1
-        self.wins += result
-        self.virtual_loss = 0  # Reset if using parallel MCTS
-        
-        # Update RAVE statistics
-        for move in rollout_moves:
-            self.rave_visits[move] += 1
-            self.rave_wins[move] += result
-            
-        if self.parent:
-            self.parent.backpropagate(1 - result, rollout_moves)  # Alternate perspective
+    def backup(self, value: float) -> None:
+        """Backpropagate a ROOT-perspective value up the path."""
+        node: Optional[_Node] = self
+        while node is not None:
+            node.N += 1
+            node.W += value
+            node.Q = node.W / node.N
+            node = node.parent
 
-    def opponent(self):
-        return "player_2" if self.player == "player_1" else "player_1"
+# ------------------------- rollout policy -------------------------
 
-    def update_pv(self):
-        """Get principal variation (for debugging)"""
-        if not self.children:
-            return [self.move] if self.move else []
-        best_child = max(self.children, key=lambda c: c.visits)
-        return [self.move] + best_child.update_pv() if self.move else best_child.update_pv()
+def _rollout_random(state: Dict, max_depth: int) -> Dict:
+    s = copy.deepcopy(state)
+    d = 0
+    while not _is_terminal(s) and d < max_depth:
+        acts = legal_actions(s)
+        if not acts:
+            break
+        a = random.choice(acts)
+        s, _, _ = step(s, a)
+        d += 1
+    return s
 
+def _rollout_greedy(state: Dict, root_idx: int, max_depth: int) -> Dict:
+    """Greedy by one-ply heuristic to speed convergence."""
+    s = copy.deepcopy(state)
+    d = 0
+    while not _is_terminal(s) and d < max_depth:
+        acts = legal_actions(s)
+        if not acts:
+            break
+        # choose action maximizing root-perspective value after 1 step
+        best_a, best_v = acts[0], -1e9
+        for a in acts:
+            ns, _, _ = step(s, a)
+            v = _score_for(ns, root_idx)
+            if v > best_v:
+                best_v, best_a = v, a
+        s, _, _ = step(s, best_a)
+        d += 1
+    return s
 
-def mcts_decide(board, player, time_limit=3, simulations=2000):
-    """Optimized MCTS decision function"""
-    root = MCTSNode(copy.deepcopy(board), player)
-    start_time = time.time()
-    simulations_done = 0
-    
-    while time.time() - start_time < time_limit and simulations_done < simulations:
+# ------------------------- MCTS core -------------------------
+
+def _mcts_search(
+    root_state: Dict,
+    n_simulations: int = 400,
+    c_puct: float = 1.4,
+    rollout: str = "random",          # "random" | "greedy"
+    max_rollout_depth: int = 40,
+) -> int:
+    """
+    Run MCTS from root_state and return the action with highest visit count.
+    Everything is evaluated from the root player's perspective.
+    """
+    root_player_idx = int(root_state["current_player"])
+    root = _Node(state=copy.deepcopy(root_state))
+    root.untried_actions = list(legal_actions(root.state))
+
+    # Uniform priors initially
+    if root.untried_actions:
+        p = 1.0 / len(root.untried_actions)
+        root.P = {a: p for a in root.untried_actions}
+
+    for _ in range(n_simulations):
+        # 1) Selection
         node = root
-        
-        # Selection
-        while node.is_fully_expanded() and node.children:
-            node = node.best_child()
-            node.virtual_loss += 1
-        
-        # Expansion
-        if not _is_terminal_board(node.board) and not node.is_fully_expanded():
-            node = node.expand()
-        
-        # Simulation
-        result, rollout_moves = node.rollout()
-        
-        # Backpropagation
-        node.backpropagate(result, rollout_moves)
-        simulations_done += 1
-    
-    # Select best move
-    if not root.children:
-        valid_moves = legal_actions(board, player)
-        return random.choice(valid_moves) if valid_moves else None
-    
-    best_child = max(root.children, key=lambda c: (
-        c.visits,
-        c.wins / (c.visits + 1e-5)
-    ))
-    
-    # print(f"Best move: {best_child.move} (visits: {best_child.visits}, win rate: {best_child.wins/best_child.visits:.2%})")
-    return best_child.move
+        while node.is_expanded() and not _is_terminal(node.state) and node.children:
+            _, node = node.best_child_ucb(c_puct)
+
+        # 2) Expansion (if not terminal and still have moves)
+        if not _is_terminal(node.state) and node.untried_actions:
+            node = node.expand_one()
+            # Optional: set uniform priors for the new node
+            if node.untried_actions:
+                p = 1.0 / len(node.untried_actions)
+                node.P = {a: p for a in node.untried_actions}
+
+        # 3) Rollout
+        if rollout == "greedy":
+            leaf = _rollout_greedy(node.state, root_player_idx, max_rollout_depth)
+        else:
+            leaf = _rollout_random(node.state, max_rollout_depth)
+
+        value = _score_for(leaf, root_player_idx)  # ROOT perspective
+
+        # 4) Backpropagate
+        node.backup(value)
+
+    # Pick the action with highest visit count from the root
+    acts = list(root.children.keys())
+    if not acts:
+        # no legal moves; return a safe default
+        safe = legal_actions(root_state)
+        return int(safe[0]) if safe else 0
+
+    best_a = max(acts, key=lambda a: root.children[a].N)
+    return int(best_a)
+
+# ------------------------- public API -------------------------
+
+def choose_move_mcts(
+    state: Dict,
+    n_simulations: int = 400,
+    c_puct: float = 1.4,
+    rollout: str = "random",
+    max_rollout_depth: int = 40,
+) -> int:
+    """
+    Convenience wrapper for external callers.
+    """
+    return _mcts_search(
+        state,
+        n_simulations=n_simulations,
+        c_puct=c_puct,
+        rollout=rollout,
+        max_rollout_depth=max_rollout_depth,
+    )
+
+# Registry-compatible name used in your registry.py
+def mcts_decide(state: Dict, n_simulations: int = 400) -> int:
+    return choose_move_mcts(state, n_simulations=n_simulations)

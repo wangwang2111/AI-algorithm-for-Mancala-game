@@ -18,8 +18,9 @@ def current_meta() -> Dict:
         try:
             return json.load(open(META_PATH))
         except Exception:
+            print(f"Failed to read {META_PATH}")
             pass
-    return {"version": "unknown"}
+    return {"version": f"unknown, {META_PATH} not found"}
 
 # ---------------------------------------------------------------------
 # Agent adapters

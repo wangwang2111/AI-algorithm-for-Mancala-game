@@ -1,66 +1,65 @@
-from mancala_ai.engine.core import _is_terminal_board, evaluate, legal_actions, _make_move_board
-import math
+# Simple Minimax (STATE-BASED, no alpha-beta)
+from __future__ import annotations
+import copy, math
+from typing import Tuple, Optional, List, Dict
+from mancala_ai.engine.core import legal_actions, step, evaluate
 
-def simple_minimax(board, depth, current_player, maximizing_for):
-    if depth == 0 or _is_terminal_board(board):
-        # Return evaluation from the perspective of the maximizing player
-        return evaluate(board, maximizing_for), None
-    
-    valid_moves = legal_actions(board, current_player)
-    if not valid_moves:
-        return evaluate(board, maximizing_for), None
+def _score_for(state: Dict, maximizing_for_idx: int) -> float:
+    """
+    Evaluate from a FIXED player's perspective by setting state['current_player']
+    before calling engine.evaluate(state).
+    """
+    s = copy.deepcopy(state)
+    s["current_player"] = maximizing_for_idx
+    return float(evaluate(s))
 
-    best_move = None
-    is_maximizing = current_player == maximizing_for
+def _minimax(
+    state: Dict,
+    depth: int,
+    maximizing_for_idx: int,
+) -> Tuple[float, Optional[int]]:
+    # Terminal or leaf
+    if depth == 0 or sum(state["pits"][0]) == 0 or sum(state["pits"][1]) == 0:
+        return _score_for(state, maximizing_for_idx), None
 
-    if is_maximizing:
-        max_eval = -math.inf
-        for move in valid_moves:
-            new_board, extra_turn = _make_move_board(board, current_player, move)
-            
-            # Always decrement depth by 1
-            new_depth = depth - 1
-            
-            # Determine next player
-            next_player = current_player if extra_turn else (
-                "player_2" if current_player == "player_1" else "player_1"
-            )
-            
-            eval_score, _ = simple_minimax(
-                new_board,
-                new_depth,
-                next_player,
-                maximizing_for
-            )
-            
-            if eval_score > max_eval:
-                max_eval = eval_score
-                best_move = move
+    moves = legal_actions(state)
+    if not moves:
+        return _score_for(state, maximizing_for_idx), None
 
-        return max_eval, best_move
+    is_max = (state["current_player"] == maximizing_for_idx)
+    best_move = moves[0]
 
+    if is_max:
+        best = -math.inf
+        for mv in moves:
+            ns, _, _ = step(state, mv)
+            # If extra turn occurred, ns['current_player'] == state['current_player']
+            # → don't reduce depth (same ply); otherwise reduce by 1.
+            reduce = 0 if ns["current_player"] == state["current_player"] else 1
+            score, _ = _minimax(ns, depth - reduce, maximizing_for_idx)
+            if score > best:
+                best, best_move = score, mv
+        return best, best_move
     else:
-        min_eval = math.inf
-        for move in valid_moves:
-            new_board, extra_turn = _make_move_board(board, current_player, move)
-            
-            new_depth = depth - 1
-            next_player = current_player if extra_turn else (
-                "player_2" if current_player == "player_1" else "player_1"
-            )
-            
-            eval_score, _ = simple_minimax(
-                new_board,
-                new_depth,
-                next_player,
-                maximizing_for
-            )
-            
-            # Invert the evaluation for the minimizing player
-            eval_score = -eval_score
-            
-            if eval_score < min_eval:
-                min_eval = eval_score
-                best_move = move
+        best = math.inf
+        for mv in moves:
+            ns, _, _ = step(state, mv)
+            reduce = 0 if ns["current_player"] == state["current_player"] else 1
+            score, _ = _minimax(ns, depth - reduce, maximizing_for_idx)
+            if score < best:
+                best, best_move = score, mv
+        return best, best_move
 
-        return min_eval, best_move
+# Public helpers -------------------------------------------------------
+
+def choose_move(state: Dict, depth: int = 5) -> int:
+    """Return best action index for the current state using plain minimax (no alpha–beta)."""
+    _, move = _minimax(state, depth=depth, maximizing_for_idx=state["current_player"])
+    if move is None:
+        acts = legal_actions(state)
+        return int(acts[0]) if acts else 0
+    return int(move)
+
+# Backwards-compatible export name (used by registry)
+def simple_minimax(state: Dict, depth: int = 5) -> int:
+    return choose_move(state, depth=depth)
