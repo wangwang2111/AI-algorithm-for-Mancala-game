@@ -53,7 +53,7 @@ mancala-ai/
 │     └─ meta.json               # {"version":"v0.1","win_rate":0.83,"trained_at":"..."}
 ├─ docker/
 │  ├─ api.Dockerfile             # Flask API (Gunicorn)
-│  └─ ui.Dockerfile              # Nginx static UI on port 5173 with /api proxy
+│  └─ ui.Dockerfile              # Nginx static UI on port 8080 with /api proxy
 ├─ docker-compose.yml
 ├─ requirements.txt
 ├─ src/wsgi.py                   # wsgi:app shim for Gunicorn
@@ -70,10 +70,10 @@ mancala-ai/
 docker compose up --build
 ```
 
-* UI: [http://localhost:5173](http://localhost:5173)
+* UI: [http://localhost:8080](http://localhost:8080)
 * API (direct): [http://localhost:8000/api/health](http://localhost:8000/api/health)
 
-**How it’s wired:** the Nginx UI container serves static files on **5173** and **proxies `/api/*` to the API** service on **8000**, so the browser uses same-origin URLs like `/api/move`.
+**How it’s wired:** the Nginx UI container serves static files on **8080** and **proxies `/api/*` to the API** service on **8000**, so the browser uses same-origin URLs like `/api/move`.
 
 ### Hot-swap model
 
@@ -113,18 +113,18 @@ curl http://localhost:8000/api/health
 
 ### 2) Frontend (static UI)
 
-Serve the `ui_static/` folder on **5173**. Two simple options:
+Serve the `ui_static/` folder on **8080**. Two simple options:
 
 **Python:**
 
 ```bash
-python -m http.server 5173 -d ui_static
+python -m http.server 8080 -d ui_static
 ```
 
 **Node (http-server):**
 
 ```bash
-npx http-server ui_static -p 5173 -c-1
+npx http-server ui_static -p 8080 -c-1
 ```
 
 ## 🔌 API Reference
@@ -235,7 +235,7 @@ The DQN service wrapper (`mancala_ai/agents/dqn.py`) lazily loads `DQNAgent` fro
 ## 🛠️ Troubleshooting
 
 * **UI can’t reach API (404 on `/api/...`)**
-  Use Docker (UI proxy on 5173), or create `env.js` that sets `window.API_BASE="http://localhost:8000/api"` and ensure it loads **before** `js/api.js`.
+  Use Docker (UI proxy on 8080), or create `env.js` that sets `window.API_BASE="http://localhost:8000/api"` and ensure it loads **before** `js/api.js`.
 
 * **Gunicorn error `--factory` not recognized**
   We use a WSGI shim: `src/wsgi.py` and run `gunicorn wsgi:app`.

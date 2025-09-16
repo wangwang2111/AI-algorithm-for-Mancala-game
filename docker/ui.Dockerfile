@@ -10,12 +10,12 @@ ARG UI_DIR=ui_static
 WORKDIR /usr/share/nginx/html
 COPY ${UI_DIR}/ ./
 
-# Nginx config: serve static on 5173 and proxy /api/* to the API service
+# Nginx config: serve static on 8080 and proxy /api/* to the API service
 # Compose gives us DNS to reach "api" by name.
 RUN rm -f /etc/nginx/conf.d/default.conf && \
     printf '%s\n' \
     "server {" \
-    "  listen 5173;" \
+    "  listen 8080;" \
     "  server_name _;" \
     "  root /usr/share/nginx/html;" \
     "  index index.html;" \
@@ -45,4 +45,4 @@ RUN rm -f /etc/nginx/conf.d/default.conf && \
     "}" \
     > /etc/nginx/conf.d/ui.conf
 
-EXPOSE 5173
+EXPOSE 8080
