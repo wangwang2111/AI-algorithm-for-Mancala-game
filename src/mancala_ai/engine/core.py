@@ -142,11 +142,61 @@ def _landing_after_sow(player_key: str, pit_idx: int, stones: int) -> Tuple[str,
         remaining -= 1
     return side, idx
 
+from typing import Dict, List
+
+def evaluate(state: Dict, last_move: int | None = None) -> float:
+    """
+    Simple heuristic for the CURRENT player (state['current_player']).
+
+    Terms (all cheap to compute, no simulation):
+      - store_diff:   my_store - opp_store           [dominant term]
+      - side_diff:    sum(my_pits) - sum(opp_pits)   [material on board]
+      - extra_turns:  (# of my moves that exactly land in my store) -
+                      (# of opp moves that exactly land in their store)
+      - mobility:     (# of my legal moves) - (# of opp legal moves)
+
+    Weights are small, easy to tweak. Returns a single scalar (higher is better for me).
+    """
+    board = _board_from_state(state)
+    me  = _player_key(state["current_player"])
+    opp = _opp_key(me)
+
+    my_pits:  List[int] = board[me][:6]
+    opp_pits: List[int] = board[opp][:6]
+    my_store, opp_store = board[me][6], board[opp][6]
+
+    # Terminal → exact score difference
+    if _is_terminal_board(board):
+        return float(my_store - opp_store)
+
+    # Core terms
+    store_diff = my_store - opp_store
+    side_diff  = sum(my_pits) - sum(opp_pits)
+
+    # Extra-turn chances: a pit i gives an extra turn if stones == (6 - i)
+    my_extra  = sum(1 for i in range(6) if my_pits[i] == (6 - i))
+    opp_extra = sum(1 for i in range(6) if opp_pits[i] == (6 - i))
+    extra_turn_balance = my_extra - opp_extra
+
+    # Mobility (how many legal moves each side has)
+    my_moves  = sum(1 for i in range(6) if my_pits[i] > 0)
+    opp_moves = sum(1 for i in range(6) if opp_pits[i] > 0)
+    mobility  = my_moves - opp_moves
+
+    # Simple weighted sum (tweak as you like)
+    score = (
+        6.0 * store_diff +   # prioritize banked points heavily
+        1.0 * side_diff  +   # prefer having more stones on our side
+        2.0 * extra_turn_balance +
+        0.5 * mobility
+    )
+    return float(score)
+
 # ---------------------------------------------------------------------
 # Heuristic Evaluation (state -> score for current player)
 # ---------------------------------------------------------------------
 
-def evaluate(state: Dict, last_move: int | None = None) -> float:
+def heuristic_evaluate(state: Dict, last_move: int | None = None) -> float:
     """
     Heuristic for the CURRENT player (state['current_player']).
     - If terminal: exact store diff (my_store - opp_store).

@@ -1,18 +1,18 @@
 from __future__ import annotations
 import copy, math
 from typing import Tuple, Optional, List, Dict
-from mancala_ai.engine.core import legal_actions, step, evaluate
+from mancala_ai.engine.core import legal_actions, step, heuristic_evaluate
 
 # ------------ scoring & ordering helpers (fixed perspective) ---------------
 
 def _score_for(state: Dict, maximizing_for_idx: int) -> float:
     """
-    Evaluate a position from a FIXED player's perspective by setting
-    state['current_player'] prior to calling engine.evaluate(state).
+    heuristic_evaluate a position from a FIXED player's perspective by setting
+    state['current_player'] prior to calling engine.heuristic_evaluate(state).
     """
     s = copy.deepcopy(state)
     s["current_player"] = maximizing_for_idx
-    return float(evaluate(s))
+    return float(heuristic_evaluate(s))
 
 def _order_moves(state: Dict, maximizing_for_idx: int) -> List[int]:
     """

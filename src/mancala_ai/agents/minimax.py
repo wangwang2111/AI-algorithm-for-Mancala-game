@@ -2,16 +2,16 @@
 from __future__ import annotations
 import copy, math
 from typing import Tuple, Optional, List, Dict
-from mancala_ai.engine.core import legal_actions, step, evaluate
+from mancala_ai.engine.core import legal_actions, step, heuristic_evaluate
 
 def _score_for(state: Dict, maximizing_for_idx: int) -> float:
     """
-    Evaluate from a FIXED player's perspective by setting state['current_player']
-    before calling engine.evaluate(state).
+    heuristic_evaluate from a FIXED player's perspective by setting state['current_player']
+    before calling engine.heuristic_evaluate(state).
     """
     s = copy.deepcopy(state)
     s["current_player"] = maximizing_for_idx
-    return float(evaluate(s))
+    return float(heuristic_evaluate(s))
 
 def _minimax(
     state: Dict,
