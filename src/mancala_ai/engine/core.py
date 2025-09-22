@@ -161,8 +161,6 @@ def evaluate(state: Dict, last_move: int | None = None) -> float:
     me  = _player_key(state["current_player"])
     opp = _opp_key(me)
 
-    my_pits:  List[int] = board[me][:6]
-    opp_pits: List[int] = board[opp][:6]
     my_store, opp_store = board[me][6], board[opp][6]
 
     # Terminal → exact score difference
@@ -171,26 +169,8 @@ def evaluate(state: Dict, last_move: int | None = None) -> float:
 
     # Core terms
     store_diff = my_store - opp_store
-    side_diff  = sum(my_pits) - sum(opp_pits)
 
-    # Extra-turn chances: a pit i gives an extra turn if stones == (6 - i)
-    my_extra  = sum(1 for i in range(6) if my_pits[i] == (6 - i))
-    opp_extra = sum(1 for i in range(6) if opp_pits[i] == (6 - i))
-    extra_turn_balance = my_extra - opp_extra
-
-    # Mobility (how many legal moves each side has)
-    my_moves  = sum(1 for i in range(6) if my_pits[i] > 0)
-    opp_moves = sum(1 for i in range(6) if opp_pits[i] > 0)
-    mobility  = my_moves - opp_moves
-
-    # Simple weighted sum (tweak as you like)
-    score = (
-        6.0 * store_diff +   # prioritize banked points heavily
-        1.0 * side_diff  +   # prefer having more stones on our side
-        2.0 * extra_turn_balance +
-        0.5 * mobility
-    )
-    return float(score)
+    return store_diff
 
 # ---------------------------------------------------------------------
 # Heuristic Evaluation (state -> score for current player)
