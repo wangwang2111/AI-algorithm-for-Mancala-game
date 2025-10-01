@@ -96,6 +96,11 @@ export FLASK_APP=wsgi:app
 
 python -m venv .venv
 . .venv/bin/activate     # Windows: .venv\Scripts\activate
+
+# Or create a conda env:
+# conda create -n mancala-ai python=3.10
+# conda activate mancala-ai
+
 pip install --upgrade pip
 # If you don't need GPU, use CPU torch in requirements.txt: torch==2.3.1
 pip install -r requirements.txt
