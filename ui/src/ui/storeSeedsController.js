@@ -12,7 +12,7 @@ export function getStoreController(scatterEl){
 
 function createController(scatterEl){
   const seeds = []; // {el, x, y}
-  let w=0, h=0, seedSize=10, exclusion=36;
+  let w=0, h=0, seedSize=10, exclusion=50;
 
   const readVars = () => {
     const cs = getComputedStyle(scatterEl);

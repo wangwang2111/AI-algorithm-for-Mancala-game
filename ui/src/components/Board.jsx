@@ -6,6 +6,44 @@ import { animateSow as animateFanout, animateCapture as doCapture } from "../ui/
 import { animateCollectRow as doCollectRow } from "../ui/sowing";
 import { getScatterController } from "../ui/scatterSeedsController";
 
+// --- helpers (put near hydrateFromState) ---------------------------------
+
+function clearAllScatters(root){
+  root.querySelectorAll('.pit__scatter, .store__scatter').forEach(sc => {
+    // fast drop: remove all children (no animations)
+    while (sc.firstChild) sc.removeChild(sc.firstChild);
+  });
+}
+
+function updateCountsText(root, s){
+  // pits: .pit__face[data-side][data-index] -> .pit__count
+  for (let side = 0; side <= 1; side++){
+    const arr = s?.pits?.[side] || [];
+    for (let i = 0; i < 6; i++){
+      const face = root.querySelector(`.pit__face[data-side="${side}"][data-index="${i}"]`)
+              || (side === 0
+                    ? root.querySelectorAll('.board__pits--bottom .pit__face')[i]
+                    : root.querySelectorAll('.board__pits--top .pit__face')[5 - i]);
+      if (!face) continue;
+      const label = face.querySelector('.pit__count');
+      if (label) label.textContent = String(arr[i] || 0);
+    }
+  }
+
+  // stores: prefer data-owner, fallback to position
+  const st0Face = root.querySelector(`.board__store[data-owner="0"] .store__face`)
+                || root.querySelector('.board__store--right .store__face')
+                || root.querySelector('.board__store--right .store');
+  const st1Face = root.querySelector(`.board__store[data-owner="1"] .store__face`)
+                || root.querySelector('.board__store--left .store__face')
+                || root.querySelector('.board__store--left .store');
+
+  const st0Val = st0Face?.querySelector('.store__value');
+  const st1Val = st1Face?.querySelector('.store__value');
+  if (st0Val) st0Val.textContent = String(s?.stores?.[0] ?? 0);
+  if (st1Val) st1Val.textContent = String(s?.stores?.[1] ?? 0);
+}
+
 function hydrateFromState(boardEl, state){
   if (!boardEl || !state) return;
 
@@ -83,7 +121,7 @@ const Board = forwardRef(function Board({ state, canPlay, onPlay }, apiRef) {
 
     // Map (player, pit) to index in the ring
     // bottom pits occupy ring[0..5]; top pits occupy ring[7..12] (since ring[6] is right store)
-    // top row is reversed in DOM → ring index = 7 + (5 - startPitIdx)
+    // top row is reversed in DOM → ring index = 7 + (startPitIdx)
     const startIndexInRing = (player === 0)
       ? startPitIdx
       : 7 + (startPitIdx)
@@ -115,9 +153,7 @@ const Board = forwardRef(function Board({ state, canPlay, onPlay }, apiRef) {
       if (!startEl) return
 
       const path    = buildPathFrom(player, pitIndex)
-      const stagger = opts.stagger ?? 200   // slower cascade
-      const hopMs   = opts.hopMs   ?? 610   // slower flight
-      await animateFanout(boardRef.current, startEl, path, seedCount, stagger, hopMs)
+      await animateFanout(boardRef.current, startEl, path, seedCount, opts)
     },
     async animateCapture(player, landingPitIndex, capturedOppCount, opts = {}) {
       if (!boardRef.current) return;
@@ -152,10 +188,20 @@ const Board = forwardRef(function Board({ state, canPlay, onPlay }, apiRef) {
       // (optional) return a cancel function
       return () => cancelAnimationFrame(rafId);
     },
+    setDemoState: (demo) => {
+      const root = boardRef.current;
+      if (!root || !demo) return;
+      // 1) wipe any existing seeds (no React re-render)
+      clearAllScatters(root);
+      // 2) lay down seeds according to the demo state
+      hydrateFromState(root, demo);
+      // 3) sync the numeric labels so they match the scattered seeds
+      updateCountsText(root, demo);
+    },
     setBusy
   }), [state])
 
-  async function handleSowAndApply(player, startPitIdx) {
+  async function handleSowAndApply(player, startPitIdx, stagger = 300, hopMs = 650) {
     if (!boardRef.current || busy) return
     if (!canPlay || turn !== player) return
     const seedCount = state?.pits?.[player]?.[startPitIdx] ?? 0
@@ -163,7 +209,7 @@ const Board = forwardRef(function Board({ state, canPlay, onPlay }, apiRef) {
 
     setBusy(true)
     try {
-      await apiRef.current?.animateSowFromPit?.(player, startPitIdx, seedCount)
+      await apiRef.current?.animateSowFromPit?.(player, startPitIdx, seedCount, { stagger: stagger, hopMs: hopMs } )
       await onPlay(startPitIdx) // backend applies for current_player
     } finally {
       setBusy(false)

@@ -23,7 +23,7 @@ export default function Pit({ count, side, pitIndex, active, disabled, onClick }
 
   return (
     <button className={cls} disabled={disabled} onClick={onClick}>
-      <div className="pit__face" ref={faceRef}>
+      <div className="pit__face" ref={faceRef} data-side={side} data-index={pitIndex} aria-label={`Pit ${pitIndex} on Player ${side} side with ${count} stones`}>
         <span className="pit__count">{count}</span>
         {/* .pit__scatter is created imperatively; no React-rendered seeds */}
         <span className="pit__index">{pitIndex}</span>
