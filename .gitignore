@@ -1,10 +1,7 @@
 .dist/
 
-# paper refs
-references/
-
 # pycache by vscode
 __pycache__/
 
-# debug game's rules
-scripts/
+
+reports/
