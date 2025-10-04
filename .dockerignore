@@ -1,0 +1,40 @@
+# VCS & editors
+.git
+**/.git
+**/.idea
+**/.vscode
+**/.history
+
+# OS cruft
+**/Thumbs.db
+**/desktop.ini
+**/*.lnk
+**/~$*
+**/*.tmp
+**/*.log
+
+# Python envs
+.venv
+venv
+**/__pycache__/
+
+# Node artifacts
+node_modules
+**/node_modules
+**/dist
+**/build
+
+# Frontend caches
+**/.parcel-cache
+**/.cache
+
+# Docker
+docker/*.md
+Dockerfile
+*.tar
+
+# # Model weights (we mount via volume in compose)
+# model_registry
+
+# Misc large/irrelevant
+**/.DS_Store

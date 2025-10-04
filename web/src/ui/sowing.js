@@ -55,13 +55,6 @@ export function ensureSowLayer(boardEl) {
   }
   return layer;
 }
-// --- count stones in a pit from its scatter --------------------------
-function countPitSeeds(pitFace) {
-  const sc = pitFace?.querySelector(".pit__scatter");
-  if (!sc) return 0;
-  // Count both classes in case you ever mix:
-  return sc.querySelectorAll(".pit__seed, .store__seed").length;
-}
 
 export function animateSeedHop(
   boardEl,
@@ -125,20 +118,48 @@ function animateFromSeedEl(boardEl, seedEl, toEl, delayMs = 0, hopMs = 420) {
   dot.style.setProperty("--hop-ms", `${hopMs}ms`);
   dot.style.animationDelay = `${delayMs}ms`;
   layer.appendChild(dot);
+  // after you compute `from` in animateFromSeedEl(...)
+  dot.style.transform = `translate(${from.x}px, ${from.y}px)`;
+  dot.style.opacity = "0"; // hide during any delay
 
   return new Promise((res) => {
     const done = () => {
       dot.remove();
       // remove the original, now-used seed node from DOM
       seedEl.remove();
+
+      layer.dispatchEvent(
+        new CustomEvent("mancala:seed-landed", {
+          bubbles: true,
+          detail: { toEl },
+        })
+      );
+      
+      const isStore = !!(
+        toEl.closest(".store__face") || toEl.closest(".store")
+      );
+      layer.dispatchEvent(
+        new CustomEvent("mancala:seed-landed", {
+          bubbles: true,
+          detail: { toEl, isStore },
+        })
+      );
+
       // make a persistent landing seed (pit/store)
       addOneTo(toEl);
 
       toEl.classList.add("landed");
-      setTimeout(() => toEl.classList.remove("landed"), 200);
+      setTimeout(() => toEl.classList.remove("landed"), hopMs);
       res();
     };
-    dot.addEventListener("animationend", done, { once: true });
+    dot.addEventListener(
+      "animationend",
+      (e) => {
+        if (e.animationName !== "seed-flight") return; // ignore seed-pop’s end
+        done();
+      },
+      { once: false }
+    );
   });
 }
 
@@ -166,7 +187,7 @@ function pathFrom(boardEl, player, pitIndex) {
   if (!ring.length) return [];
 
   // start index in ring
-  const startRingIdx = player === 0 ? pitIndex : 7 + (pitIndex); // top was reversed
+  const startRingIdx = player === 0 ? pitIndex : 7 + pitIndex; // top was reversed
 
   // rotate so index 0 is the clicked pit
   const rotated = ring.slice(startRingIdx).concat(ring.slice(0, startRingIdx));
@@ -231,9 +252,11 @@ export async function animateSow(
 }
 
 // helpers used by both capture and sweep
-function pitFaceFor(boardEl, player, pitIndex){
+function pitFaceFor(boardEl, player, pitIndex) {
   if (player === 0) {
-    const bottoms = [...boardEl.querySelectorAll(".board__pits--bottom .pit__face")];
+    const bottoms = [
+      ...boardEl.querySelectorAll(".board__pits--bottom .pit__face"),
+    ];
     return bottoms[pitIndex] || null;
   } else {
     const tops = [...boardEl.querySelectorAll(".board__pits--top .pit__face")];
@@ -241,7 +264,7 @@ function pitFaceFor(boardEl, player, pitIndex){
     return tops[domIdx] || null;
   }
 }
-function storeFaceFor(boardEl, player){
+function storeFaceFor(boardEl, player) {
   const ownerRoot =
     boardEl.querySelector(`.board__store[data-owner="${player}"]`) ||
     (player === 0
@@ -251,13 +274,13 @@ function storeFaceFor(boardEl, player){
 }
 
 // Pull up to n seed elements from a scatter (oldest last so layout looks natural)
-function takeSeeds(scatter, n){
+function takeSeeds(scatter, n) {
   if (!scatter || !n) return [];
   const list = [...scatter.querySelectorAll(".pit__seed, .store__seed")];
   if (!list.length) return [];
   // take from the end (visually top-most if appended order)
   const out = [];
-  for (let i = 0; i < n && list.length; i++){
+  for (let i = 0; i < n && list.length; i++) {
     const el = list.pop();
     out.push(el);
   }
@@ -265,20 +288,22 @@ function takeSeeds(scatter, n){
 }
 
 // If a real seed el is missing, create a temporary ghost at `fromEl` center
-function makeGhostSeed(fromEl){
+function makeGhostSeed(fromEl) {
   const host = fromEl.closest(".board, .board--grid") || fromEl.parentElement;
-  const layer = host?.querySelector(".sow-layer") || (() => {
-    const l = document.createElement("div");
-    l.className = "sow-layer";
-    host.appendChild(l);
-    return l;
-  })();
+  const layer =
+    host?.querySelector(".sow-layer") ||
+    (() => {
+      const l = document.createElement("div");
+      l.className = "sow-layer";
+      host.appendChild(l);
+      return l;
+    })();
 
   // position at the visual center of fromEl
   const a = fromEl.getBoundingClientRect();
   const b = layer.getBoundingClientRect();
-  const cx = a.left - b.left + a.width/2;
-  const cy = a.top  - b.top  + a.height/2;
+  const cx = a.left - b.left + a.width / 2;
+  const cy = a.top - b.top + a.height / 2;
 
   const ghost = document.createElement("span");
   ghost.className = "pit__seed"; // reuse same size via CSS
@@ -301,12 +326,12 @@ export async function animateCapture(
   landingPitIndex,
   capturedOppCount,
   { stagger = 200, hopMs = 420 } = {}
-){
+) {
   if (!boardEl) return;
 
-  const oppIndex  = 5 - landingPitIndex;
-  const landing   = pitFaceFor(boardEl, player, landingPitIndex);
-  const opposite  = pitFaceFor(boardEl, 1 - player, oppIndex);
+  const oppIndex = 5 - landingPitIndex;
+  const landing = pitFaceFor(boardEl, player, landingPitIndex);
+  const opposite = pitFaceFor(boardEl, 1 - player, oppIndex);
   const storeFace = storeFaceFor(boardEl, player);
   if (!landing || !opposite || !storeFace) return;
 
@@ -328,11 +353,21 @@ export async function animateCapture(
   // Launch flights: landing stone first, then opponent stones with stagger
   const flights = [];
   // move the landing one immediately
-  flights.push(animateFromSeedEl(boardEl, landingSeeds[0], storeFace, 0, hopMs));
+  flights.push(
+    animateFromSeedEl(boardEl, landingSeeds[0], storeFace, 0, hopMs)
+  );
 
   // move opponent stones with fan-out delays
-  for (let i = 0; i < oppSeeds.length; i++){
-    flights.push(animateFromSeedEl(boardEl, oppSeeds[i], storeFace, (i + 1) * stagger, hopMs));
+  for (let i = 0; i < oppSeeds.length; i++) {
+    flights.push(
+      animateFromSeedEl(
+        boardEl,
+        oppSeeds[i],
+        storeFace,
+        (i + 1) * stagger,
+        hopMs
+      )
+    );
   }
 
   // Optional emphasis on the store while receiving
@@ -353,7 +388,7 @@ export async function animateCollectRow(
   player,
   counts,
   { pitStagger = 140, stoneStagger = 50, hopMs = 420 } = {}
-){
+) {
   if (!boardEl || !counts) return;
 
   const storeFace = storeFaceFor(boardEl, player);
@@ -361,7 +396,7 @@ export async function animateCollectRow(
 
   const flights = [];
 
-  for (let pitIdx = 0; pitIdx < 6; pitIdx++){
+  for (let pitIdx = 0; pitIdx < 6; pitIdx++) {
     const n = counts[pitIdx] | 0;
     if (n <= 0) continue;
 
@@ -377,9 +412,11 @@ export async function animateCollectRow(
     }
 
     // fan out stones for this pit, with pit-level and stone-level stagger
-    for (let s = 0; s < seeds.length; s++){
+    for (let s = 0; s < seeds.length; s++) {
       const delay = pitIdx * pitStagger + s * stoneStagger;
-      flights.push(animateFromSeedEl(boardEl, seeds[s], storeFace, delay, hopMs));
+      flights.push(
+        animateFromSeedEl(boardEl, seeds[s], storeFace, delay, hopMs)
+      );
     }
   }
 

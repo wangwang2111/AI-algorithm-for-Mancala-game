@@ -1,39 +1,37 @@
-version: "3.9"
+version: "4.0"
 
 services:
   api:
     build:
       context: .
       dockerfile: docker/api.Dockerfile
-      # If you uncomment the optional PyTorch install section in api.Dockerfile,
-      # you can pass this build arg:
+      # If you enable optional Torch install in api.Dockerfile:
       # args:
       #   INSTALL_TORCH: "1"
-    deploy:
-      resources:
-        reservations:
-          devices:
-            - capabilities: ["gpu"]
-    # For Docker Desktop or non-Swarm Compose v2, you can use:
-    #  device_requests:
-    #    - driver: nvidia
-    #      capabilities: [gpu]
-
     environment:
       - PYTHONUNBUFFERED=1
       - MODEL_REGISTRY=/app/model_registry/latest
     ports:
       - "8000:8000"
     volumes:
-      # Mount your model weights so you can swap them without rebuilding
+      # Swap model weights without rebuilding
       - ./model_registry:/app/model_registry:ro
-      # (Optional) live-mount your src for quick iteration; comment out in prod
+      # (Optional) live-mount src for quick iteration; comment out for prod
       # - ./src:/app/src:ro
     healthcheck:
       test: ["CMD", "curl", "-fsS", "http://localhost:8000/api/health"]
       interval: 10s
       timeout: 3s
       retries: 5
+    deploy:
+      resources:
+        reservations:
+          devices:
+            - capabilities: ["gpu"]
+    # For Docker Desktop (non-Swarm) you can use device_requests instead:
+    # device_requests:
+    #   - driver: nvidia
+    #     capabilities: [gpu]
     restart: unless-stopped
 
   ui:
@@ -41,14 +39,39 @@ services:
       context: .
       dockerfile: docker/ui.Dockerfile
       args:
-        # Change if your static folder name is different
-        UI_DIR: "ui_static"
-    ports:
-      - "8080:8080"
+        API_BASE: http://api:8000/api
     depends_on:
       api:
         condition: service_healthy
+    ports:
+      - "8080:8080"
+    healthcheck:
+      test: ["CMD", "curl", "-fsS", "http://localhost:8080/"]
+      interval: 10s
+      timeout: 3s
+      retries: 5
     restart: unless-stopped
+
+  # --- Optional: React dev server with hot reload (vite) ---
+  # Run with: docker compose --profile dev up --build
+  ui-dev:
+    profiles: ["dev"]
+    build:
+      context: ./web
+      dockerfile: Dockerfile # (optional) or just use node image below
+    image: node:20-alpine
+    working_dir: /app
+    volumes:
+      - ./web:/app
+    command: sh -c "npm ci && npm run dev -- --host 0.0.0.0 --port 5173"
+    environment:
+      # Vite proxy: make sure vite.config.* proxies /api → http://api:8000
+      - CHOKIDAR_USEPOLLING=true
+    depends_on:
+      api:
+        condition: service_healthy
+    ports:
+      - "5173:5173"
 
 
 # From repo root (adjust paths if needed)

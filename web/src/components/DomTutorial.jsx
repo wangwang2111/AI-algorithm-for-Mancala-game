@@ -1,6 +1,8 @@
 // components/DomTutorial.jsx
 import React, { useEffect, useMemo, useRef, useState } from "react";
 import { applyMove } from "../api"; // fix path: DomTutorial -> components/, api is one level up
+// after await commitServerMove(5) in the endgame step
+import { sfx, unlockAudio } from "../ui/sfx";
 
 // util used by drag code
 function clamp(v, min, max) {
@@ -25,7 +27,7 @@ function buildSteps({ setDemo, commitServerMove }) {
     {
       key: "welcome",
       title: "Welcome to Mancala",
-      text: "This tutorial uses the real board and animations. Tap Next to see sowing, capturing, and endgame sweep.",
+      text: "This tutorial uses the real board and animations. Tap Next to see sowing, extra turn, capturing, and endgame sweep.",
       run: async () => {},
     },
     {
@@ -35,7 +37,7 @@ function buildSteps({ setDemo, commitServerMove }) {
       run: async (api) => {
         const initial = {
           pits: [
-            [1, 1, 4, 1, 1, 1],
+            [1, 1, 1, 1, 4, 1],
             [1, 1, 1, 1, 1, 1],
           ],
           stores: [1, 1],
@@ -43,8 +45,41 @@ function buildSteps({ setDemo, commitServerMove }) {
         };
         await setDemo(initial);
         await wait(1500);
-        await api?.animateSowFromPit?.(0, 2, 4, { stagger: 600, hopMs: 1400 });
-        await commitServerMove(2); // update counts from server
+        await api?.animateSowFromPit?.(0, 4, 4, { stagger: 900, hopMs: 800 });
+        await commitServerMove(4); // update counts from server
+      },
+    },
+    {
+      key: "extra",
+      title: "Extra Turn",
+      text: "If your last stone lands in your own store, you get another turn immediately.",
+      run: async (api) => {
+        // Setup: Player 0 to move; pit 4 has exactly 2 stones, so the last one lands in P0 store.
+        const setup = {
+          pits: [
+            /* P0 (bottom) */ [1, 1, 4, 1, 1, 1],
+            /* P1 (top)    */ [1, 1, 1, 1, 1, 1],
+          ],
+          stores: [0, 0],
+          current_player: 0,
+        };
+        await setDemo(setup);
+        await wait(1500);
+
+        // First move: P0 sows from pit 4 with 2 stones → last lands in P0 store → extra turn.
+        await api?.animateSowFromPit?.(0, 2, 4, { stagger: 650, hopMs: 700 });
+        await commitServerMove(2); // server applies and should leave current_player = 0 (extra turn)
+
+        await wait(1000);
+
+        // Bonus move: still P0; demonstrate taking another pit (pit 5 has 2).
+        await api?.animateSowFromPit?.(0, 4, 2, { stagger: 700, hopMs: 700 });
+        await commitServerMove(4);
+
+        await wait(1000);
+
+        await api?.animateSowFromPit?.(0, 0, 1, { stagger: 700, hopMs: 700 });
+        await commitServerMove(0);
       },
     },
     {
@@ -62,9 +97,10 @@ function buildSteps({ setDemo, commitServerMove }) {
         };
         await setDemo(setup);
         await wait(1500);
-        await api?.animateSowFromPit?.(0, 2, 1, { stagger: 900, hopMs: 1100 });
-        await api?.animateCapture?.(0, 3, 3, { stagger: 600, hopMs: 1100 });
-        await commitServerMove(2);
+        await api?.animateSowFromPit?.(0, 2, 1, { stagger: 900, hopMs: 800 });
+        await wait(1000);
+        await api?.animateCapture?.(0, 3, 3, { stagger: 700, hopMs: 800 });
+        await commitServerMove(2, { forceP1: true });
       },
     },
     {
@@ -82,13 +118,17 @@ function buildSteps({ setDemo, commitServerMove }) {
         };
         await setDemo(endSetup);
         await wait(1500);
-        await api?.animateSowFromPit?.(0, 5, 1, { stagger: 600, hopMs: 1000 });
+        await api?.animateSowFromPit?.(0, 5, 1, { stagger: 900, hopMs: 800 });
+        await wait(1000);
         await api?.animateCollectRow?.(1, [3, 4, 2, 0, 0, 0], {
-          pitStagger: 700,
-          stoneStagger: 320,
-          hopMs: 1100,
+          pitStagger: 900,
+          stoneStagger: 520,
+          hopMs: 600,
         });
         await commitServerMove(5);
+        // ensure audio is unlocked at some earlier user gesture; in case of autoplay edge cases:
+        unlockAudio();
+        sfx.win();
       },
     },
     {
@@ -106,8 +146,9 @@ function buildSteps({ setDemo, commitServerMove }) {
   ];
 }
 
-export default function DomTutorial({ boardApi, onClose }) {
+export default function DomTutorial({ boardApi, onClose, onFinish }) {
   const [step, setStep] = useState(0);
+  const finishBtnRef = useRef(null);
   const [running, setRunning] = useState(false);
   const [nonce, setNonce] = useState(0);
   const caps = useMemo(() => hasApi(boardApi), [boardApi]);
@@ -115,6 +156,7 @@ export default function DomTutorial({ boardApi, onClose }) {
   // Keep a local “tutorial state” in sync with the server after each demo move
   const demoRef = useRef(null);
 
+  
   // Set both the board visuals and our local demo state
   async function setDemo(state) {
     demoRef.current = state;
@@ -124,30 +166,41 @@ export default function DomTutorial({ boardApi, onClose }) {
       boardApi.hydrate(state);
     }
   }
-
-  // Call backend to apply a move to the current demo state; then re-hydrate board
+  
+  // Call backend to apply a move to the current demo state; then reconcile (no reset)
   async function commitServerMove(action) {
     const prev = demoRef.current;
     if (!prev) return null;
     const res = await applyMove(prev, action); // server returns { state, ... }
     const next = res?.state;
+    console.log("previous demo state", prev);
+    console.log("Demo move", action, "gives", next);
+    
     if (next) {
       demoRef.current = next;
       // reflect definitive counts from server
-      if (boardApi?.setDemoState) await boardApi.setDemoState(next);
-      else if (boardApi?.hydrate) boardApi.hydrate(next);
+      // IMPORTANT: reconcile counts without re-shuffling stone positions
+      if (boardApi?.hydrate) boardApi.hydrate(next);
+      else if (boardApi?.setDemoState) await boardApi.setDemoState(next); // fallback only
     }
     return next;
   }
-
+  
   const steps = useMemo(() => buildSteps({ setDemo, commitServerMove }));
-
+  
   const cur = steps[step];
-
+  
   // at top of component:
   const lastTokenRef = useRef(null);
   const runningRef = useRef(false);
-
+  
+  // When we arrive at the last step, focus the Back to Menu button
+  useEffect(() => {
+    if (step === steps.length - 1) {
+      requestAnimationFrame(() => finishBtnRef.current?.focus());
+    }
+  }, [step, steps.length]);
+  
   // inside component, replace your step-run effect with:
   useEffect(() => {
     const token = `${step}|${nonce}`;
@@ -369,7 +422,7 @@ export default function DomTutorial({ boardApi, onClose }) {
             <button
               className="btn btn--small"
               onClick={() => setNonce((n) => n + 1)} // 👈 replay trigger
-              disabled={running}
+              // disabled={running}
               title="Replay this step"
             >
               ↺ Replay
@@ -384,13 +437,27 @@ export default function DomTutorial({ boardApi, onClose }) {
             >
               Exit
             </button>
-            <button
-              className="btn btn--primary"
-              onClick={() => setStep((s) => Math.min(steps.length - 1, s + 1))}
-              disabled={step === steps.length - 1}
-            >
-              Next ›
-            </button>
+            {step === steps.length - 1 ? (
+              <button
+                className="btn btn--accent"
+                ref={finishBtnRef}
+                onClick={() => {
+                  // Prefer explicit finish callback; fall back to onClose.
+                  if (onFinish) onFinish();
+                  else onClose?.();
+                }}
+              >
+                Back to Menu
+              </button>
+            ) : (
+              <button
+                className="btn btn--primary"
+                onClick={() => setStep((s) => Math.min(steps.length - 1, s + 1))}
+                disabled={step === steps.length - 1}
+              >
+                Next ›
+              </button>
+            )}
           </div>
         </div>
       </div>

@@ -8,6 +8,8 @@ import MoveLog from "./components/MoveLog";
 import { launchFireworks } from "./ui/fireworks";
 import GameMenu from "./components/Menu";
 import DomTutorial from "./components/DomTutorial";
+import ErrorBoundary from './components/ErrorBoundary';
+import { sfx, unlockAudio, setMuted as setSfxMutedGlobal, setVolume as setSfxVolume, attachMusic } from "./ui/sfx";
 import "./styles.css";
 
 function useAudio() {
@@ -16,12 +18,18 @@ function useAudio() {
   const [sfxMuted, setSfxMuted] = useState(false);
 
   useEffect(() => {
+    setSfxMutedGlobal(sfxMuted);
+  }, [sfxMuted]);
+
+  useEffect(() => {
     // lazily create a looping music track (replace src with your file)
     if (!musicRef.current) {
       const a = new Audio("/assets/music.mp3"); // ← replace path
       a.loop = true;
       a.volume = 0.25;
       musicRef.current = a;
+     // Let SFX module duck music slightly during clicks
+     attachMusic(musicRef.current);
     }
     musicRef.current.muted = musicMuted;
   }, [musicMuted]);
@@ -49,6 +57,9 @@ function useAudio() {
       const a = new Audio(src);
       a.volume = 0.6;
       a.play().catch(() => {});
+      if (name === "click") sfx.seedPit();     // light UI click
+      if (name === "capture") sfx.capture();
+      if (name === "sweep") sfx.sweep();
     },
     [sfxMuted]
   );
@@ -118,6 +129,7 @@ export default function App() {
   // initial new game
   useEffect(() => {
     handleNew();
+    setSfxVolume(1.0); // push SFX hotter, compressor will tame peaks
   }, []); // eslint-disable-line
 
   // auto-pick first legal pit when state or turn changes
@@ -174,10 +186,13 @@ export default function App() {
 
       // If we chose Human vs AI and AI goes first, auto-trigger AI after mount
       if (mode === "hva" && firstTurn === "ai") {
+        setHumanSide(1); // human is P1 (top), AI is P0 (bottom)
         // Wait a tick so Board renders
         setTimeout(() => {
           handleAI(ng.state);
         }, 500);
+      } else {
+        setHumanSide(0); // human is P0 (bottom), AI is P1 (top)
       }
     } catch (e) {
       setError(e?.message || "Failed to start new game");
@@ -246,11 +261,14 @@ export default function App() {
         setWinner(w);
         setEndedOnce(true);
 
+        // ensure audio is unlocked at some earlier user gesture; in case of autoplay edge cases:
+        unlockAudio();
+        sfx.win();
         // Optional: launch fireworks over the board container
         const cleanup = launchFireworks(boardShellRef.current, {
-          durationMs: 5000,
+          durationMs: 2000,
         });
-        setTimeout(() => cleanup && cleanup(), 6000);
+        setTimeout(() => cleanup && cleanup(), 5000);
         setLog((L) => [w === "draw" ? `Draw` : `Player ${w} wins`, ...L]);
       }
 
@@ -325,6 +343,10 @@ export default function App() {
         if (w !== null && !endedOnce) {
           setWinner(w);
           setEndedOnce(true);
+
+          // ensure audio is unlocked at some earlier user gesture; in case of autoplay edge cases:
+          unlockAudio();
+          sfx.win();
           const cleanup = launchFireworks(boardShellRef.current, {
             durationMs: 4000,
           });
@@ -404,22 +426,24 @@ export default function App() {
             ref={boardShellRef}
             style={{ position: "relative" }}
           >
-            <Board
-              ref={boardApi}
-              state={state}
-              canPlay={
-                !!state && 
-                (mode === 'playground' ? true : state.current_player === humanSide)
-              }
-              onPlay={(idx) => {
-                // toggle panel on small screens after a move
-                if (sidebarOpen) setSidebarOpen(false);
-                // your handler:
-                // handleHuman(idx);
-                handleHuman(idx);
-              }}
-              mode={mode}
-            />
+            <ErrorBoundary>
+              <Board
+                ref={boardApi}
+                state={state}
+                canPlay={
+                  !!state && 
+                  (mode === 'playground' ? true : state.current_player === humanSide)
+                }
+                onPlay={(idx) => {
+                  // toggle panel on small screens after a move
+                  if (sidebarOpen) setSidebarOpen(false);
+                  // your handler:
+                  // handleHuman(idx);
+                  handleHuman(idx);
+                }}
+                mode={mode}
+              />
+            </ErrorBoundary>
           </div>
           <div className="status">
             <span className={`dot ${busy ? "animate-pulse" : ""}`} />
@@ -514,6 +538,13 @@ export default function App() {
               boardApi.current.hydrate?.(state);
             }
             setShowTutorial(false);
+          }}
+          onFinish={() => {
+            if (boardApi.current && state) {
+              boardApi.current.hydrate?.(state);
+            }
+            setShowTutorial(false);
+            setMenuOpen(true);          // ← bring user back to main menu
           }}
         />
       )}
