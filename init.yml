@@ -1,0 +1,61 @@
+#cloud-config
+package_update: true
+package_upgrade: true
+packages:
+  - ca-certificates
+  - curl
+  - git
+  - ufw
+  - unattended-upgrades
+
+runcmd:
+  # Enable unattended security updates
+  - sed -i 's#^//Unattended-Upgrade::Automatic-Reboot.*#Unattended-Upgrade::Automatic-Reboot "true";#' /etc/apt/apt.conf.d/50unattended-upgrades || true
+  - systemctl enable unattended-upgrades
+  - systemctl start unattended-upgrades
+
+  # Install Docker (official convenience script)
+  - curl -fsSL https://get.docker.com | sh
+  - usermod -aG docker ubuntu
+
+  # Docker Compose plugin (Ubuntu repo)
+  - apt-get update && apt-get install -y docker-compose-plugin
+  - docker compose version || true
+
+  # Firewall: allow web
+  - ufw allow 80/tcp
+  - ufw allow 443/tcp
+  - yes | ufw enable
+  - ufw status
+
+  # Prepare deploy directory
+  - mkdir -p /opt/app
+  - chown -R ubuntu:ubuntu /opt/app
+
+  # Optional: pull your repo (adjust URL/branch)
+  - sudo -u ubuntu git clone --depth=1 YOUR_GITHUB_REPO_URL /opt/app || true
+  - cd /opt/app && sudo -u ubuntu git pull || true
+
+  # Hint text on login
+  - bash -lc 'echo -e "\nNext steps:\n  cd /opt/app\n  # put Dockerfile.api, Dockerfile.web, Caddyfile, docker-compose.yml here\n  docker compose build && docker compose up -d\n" > /etc/motd'
+
+# Replace 172.25.73.73 with your Wi-Fi IPv4 from ipconfig
+docker run -d --name mancala-ui `
+  -p 172.25.73.73:8080:80 `
+  --read-only --cpus=1.0 --memory=128m --pids-limit=128 `
+  --security-opt=no-new-privileges `
+  --cap-drop=ALL `
+  b323d76c3efc747ef91b9903da9dee2854689977c38fb37e7a33f95192522d40
+
+docker run -d --name mancala-api `
+  -p 172.25.73.73:8000:8000 `
+  --read-only --cpus=1.0 --memory=256m --pids-limit=256 `
+  --security-opt=no-new-privileges `
+  --cap-drop=ALL `
+  -e UVICORN_NUM_WORKERS=1 `
+  96587e03bde2c032ed13c07d3bdc530e7e161866ed19eb72345a38b39531efeb
+
+
+netsh advfirewall firewall add rule name="Mancala UI 8080" dir=in action=allow protocol=TCP localport=8080 profile=private
+netsh advfirewall firewall add rule name="Mancala API 8000" dir=in action=allow protocol=TCP localport=8000 profile=private
+

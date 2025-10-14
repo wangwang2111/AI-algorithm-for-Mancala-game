@@ -599,31 +599,30 @@ body {
     border-radius: 18px;
   }
   .board--grid {
-    gap: 12px;
-    padding: 12px;
+    gap: 8px;
+    padding: 10px;
+    /* grid-template-columns: (40px, var(--store-w)) 1fr minmax(40px, var(--store-w)); */
   }
   :root {
-    --store-w: 70px;
-    --store-h: 190px;
+    --store-w: 30px;
+    --store-h: 145px;
     --pit-w: clamp(
-      40px,
-      36vw,
-      60px
+      30px,
+      35vw,
+      50px
     ); /* each pit grows to fill width in 2x3 rows */
-    --pit-h: clamp(102px, 44vw, 170px);
-    --seed-cols: 4;
-    --seed-size: clamp(10px, 3vw, 16px);
+    --pit-h: clamp(90px, 36vw, 120px);
+    --seed-size: clamp(8px, 2.8vw, 13px);
   }
   .board__pits {
-    gap: 2px;
+    gap: 8px;
   }
 }
 
 /* Very small phones */
 @media (max-width: 420px) {
   :root {
-    --seed-cols: 3;
-    --seed-size: clamp(10px, 3.6vw, 18px);
+    --seed-size: clamp(8px, 2vw, 13px);
   }
   .log__scroll {
     max-height: 220px;
